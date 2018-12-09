@@ -1,0 +1,32 @@
+File = { SOI ~ Fn ~ EOI }
+
+FnName = @{ ASCII_ALPHANUMERIC+ }
+Fn = { ".fn" ~ SecFnHead ~ SecConst ~ SecUpvalue ~ SecOp ~ SecFn ~".endfn" }
+
+SecFnHead = _{ "(" ~ RefImValue ~ "," ~ ValBool ~ ")" }
+ValBool = { "true" | "false" }
+
+SecOp = { ".instruction" ~ OpCall* }
+OpCall = { OpName ~ OpParams ~ NEWLINE? }
+OpName = @{ ASCII_ALPHA+ }
+OpParams = _{ (RefRegister | RefConst | RefUpvalue | RefImValue){1,3} }
+
+RefRegister = @{ "R" ~ ASCII_DIGIT+ }
+RefConst = @{ "K" ~ ASCII_DIGIT+ }
+RefUpvalue = @{ "U" ~ ASCII_DIGIT+ }
+RefImValue = @{ "-"? ~ ASCII_DIGIT+ }
+RefStack = @{ "L" ~ ASCII_DIGIT+ }
+// RefFunc = @{ "root" | ("function" ~ ("_" ~ASCII_DIGIT+)+) }
+
+SecConst = { ".const" ~ ConstDef* }
+ConstDef = { RefConst ~ ":" ~ ConstTy ~ "=" ~ ConstValue }
+ConstTy = { "nil" | "bool" | "string" | "number" }
+ConstValue = @{ (!WHITESPACE ~ ANY)+ }
+
+SecUpvalue = { ".upvalue" ~ UpvalueDef* }
+UpvalueDef = { RefUpvalue ~ "=" ~ RefStack ~ RefRegister }
+
+SecFn = { Fn* }
+
+WHITESPACE = _{ " " | NEWLINE }
+COMMENT = _{ ";" ~ (!NEWLINE ~ ANY)* ~ NEWLINE? }
