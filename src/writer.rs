@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use std::io::Write;
+
 pub struct Writer {
     vec: Vec<u8>,
     endian: bool, // true for big-endian
@@ -23,6 +25,9 @@ impl Writer {
     }
     pub fn vec_mut(&mut self) -> &mut Vec<u8> {
         &mut self.vec
+    }
+    pub fn write_to_file(&self, file: &mut std::fs::File) -> Result<(), std::io::Error> {
+        file.write_all(&self.vec)
     }
 }
 

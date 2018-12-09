@@ -2,15 +2,14 @@ use crate::lua::lua52::LUA_OPCODE;
 use crate::lua::{InstMode, OpArgMode};
 use crate::writer::{WriteNumber, Writer};
 use pest::iterators::Pair;
-use serde_derive::Serialize;
 
 #[derive(Parser)]
 #[grammar = "luaasm.pest"] // relative to src
 pub struct LuaAsmParser;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug)]
 pub struct LuaFile(pub Func);
-#[derive(Debug, Serialize)]
+#[derive(Debug)]
 pub struct Func {
     pub args: u8,
     pub is_varg: bool,
@@ -20,7 +19,7 @@ pub struct Func {
     pub instructions: Vec<Instruction>,
     pub funcs: Vec<Func>,
 }
-#[derive(Debug, Serialize)]
+#[derive(Debug)]
 pub enum Ref {
     Register(u32),
     Constant(u32),
@@ -28,18 +27,18 @@ pub enum Ref {
     ImmediateValue(i32),
     Stack(u32),
 }
-#[derive(Debug, Serialize)]
+#[derive(Debug)]
 pub struct Constant(pub Ref, pub Value);
-#[derive(Debug, Serialize)]
+#[derive(Debug)]
 pub enum Value {
     Nil,
     Bool(bool),
     Num(f64),
     Str(String),
 }
-#[derive(Debug, Serialize)]
+#[derive(Debug)]
 pub struct Upvalue(pub Ref, pub Ref, pub Ref);
-#[derive(Debug, Serialize)]
+#[derive(Debug)]
 pub struct Instruction {
     pub op: String,
     pub params: Vec<Ref>,
@@ -268,44 +267,44 @@ impl Into<u32> for Instruction {
         );
 
         let mut val: u32 = op;
-        println!("OP={:>032b}", val);
+        // println!("OP={:>032b}", val);
         match opmode_inst {
             InstMode::iABC => {
-                println!(
-                    "A ={:>032b}\nB ={:>032b}\nC ={:>032b}",
-                    (a as u32) << 6,
-                    (b as u32) << 23,
-                    (c as u32) << 14
-                );
+                // println!(
+                //     "A ={:>032b}\nB ={:>032b}\nC ={:>032b}",
+                //     (a as u32) << 6,
+                //     (b as u32) << 23,
+                //     (c as u32) << 14
+                // );
                 val |= (a as u32) << 6;
                 val |= (c as u32) << 14;
                 val |= (b as u32) << 23;
             }
             InstMode::iABx => {
-                println!(
-                    "A ={:>032b}\nB ={:>032b}",
-                    (a as u32) << 6,
-                    (b as u32) << 14
-                );
+                // println!(
+                //     "A ={:>032b}\nB ={:>032b}",
+                //     (a as u32) << 6,
+                //     (b as u32) << 14
+                // );
                 val |= (a as u32) << 6;
                 val |= (b as u32) << 14;
             }
             InstMode::iAsBx => {
-                println!(
-                    "A ={:>032b}\nB ={:>032b}",
-                    (a as u32) << 6,
-                    (b as u32) << 14
-                );
+                // println!(
+                //     "A ={:>032b}\nB ={:>032b}",
+                //     (a as u32) << 6,
+                //     (b as u32) << 14
+                // );
                 val |= (a as u32) << 6;
                 val |= ((b - 1 + (1 << 17)) as u32) << 14;
                 // val |= (if b >= 0 { 0x01 } else { 0x00 }) << 31;
             }
             InstMode::iAx => {
-                println!("A ={:>032b}", (a as u32) << 6,);
+                // println!("A ={:>032b}", (a as u32) << 6,);
                 val |= (a as u32) << 6;
             }
         }
-        println!("{}\n{:>08X}\n{:>032b}\n", self.op, val, val);
+        // println!("{}\n{:>08X}\n{:>032b}\n", self.op, val, val);
 
         val
     }

@@ -1,4 +1,5 @@
 use crate::parser::{LuaAsmParser, LuaFile};
+use crate::writer::{WriteNumber, Writer};
 use clap::{App, Arg, ArgMatches, SubCommand};
 use pest::Parser;
 use std::fs::File;
@@ -9,15 +10,22 @@ pub fn get_subcommand() -> App<'static, 'static> {
         .about("assemble lua bytecode")
         .arg(Arg::with_name("input").required(true))
         .arg(
-            Arg::with_name("lua")
-                .alias("l")
+            Arg::with_name("output")
                 .required(true)
+                .default_value("luac.out"),
+        )
+        .arg(
+            Arg::with_name("lua")
+                .short("l")
+                .long("lua")
+                .takes_value(true)
                 .default_value("5.2"),
         )
         .arg(
             Arg::with_name("endian")
-                .alias("e")
-                .required(true)
+                .short("e")
+                .long("endian")
+                .takes_value(true)
                 .default_value("little"),
         )
 }
@@ -37,40 +45,53 @@ pub fn run(args: &ArgMatches) {
     // print!("{}", serde_json::to_string(&result).unwrap());
 
     // common header
-    let mut result: Vec<u8> = Vec::new();
+    let mut writer = Writer::new();
     // Lua bytecode signature
-    result.extend(&[0x1B, 0x4C, 0x75, 0x61]);
+    writer.write(0x1Bu8);
+    writer.write(0x4Cu8);
+    writer.write(0x75u8);
+    writer.write(0x61u8);
     // [u8 version] Version number (0x52 for Lua 5.2, etc)
     match args.value_of("lua").unwrap() {
-        "5.2" => result.push(0x52),
+        "5.2" => writer.write(0x52u8),
         v => panic!("unsupported lua version {}", v),
     }
     // [u8 impl] Implementation (0 for reference impl)
-    result.push(0x00);
+    writer.write(0x00u8);
     // [u8 endian] Big-endian flag
     match args.value_of("endian").unwrap() {
-        "little" => result.push(0x01),
-        "big" => result.push(0x00),
+        "little" => writer.write(0x01u8),
+        "big" => writer.write(0x00u8),
         v => panic!("unsupported endian {}", v),
     }
     // [u8 intsize] Size of integers (usually 4)
-    result.push(0x04);
+    writer.write(0x04u8);
     // [u8 size_t] Size of pointers
-    result.push(0x04);
+    writer.write(0x04u8);
     // [u8 instsize] Size of instructions (always 4)
-    result.push(0x04);
+    writer.write(0x04u8);
     //  [u8 numsize] Size of Lua numbers (usually 8)
-    result.push(0x08);
+    writer.write(0x08u8);
     // [u8 use_int] Use integers instead of floats (usually for embedded)
-    result.push(0x00);
+    writer.write(0x00u8);
     // Lua magic (used to detect presence of EOL conversion)
-    result.extend(&[0x19, 0x93, 0x0D, 0x0A, 0x1A, 0x0A]);
+    writer.write(0x19u8);
+    writer.write(0x93u8);
+    writer.write(0x0Du8);
+    writer.write(0x0Au8);
+    writer.write(0x1Au8);
+    writer.write(0x0Au8);
 
     // main function
-    result.append(&mut file.into());
+    let content: Vec<u8> = file.into();
+    writer.write(content);
 
     // output result
-    for num in result {
-        println!("{:02X}", num);
-    }
+    let mut file = args
+        .value_of("output")
+        .and_then(|path| File::create(path).ok())
+        .expect("cannot open write file");
+    writer
+        .write_to_file(&mut file)
+        .expect("cannot write output");
 }
