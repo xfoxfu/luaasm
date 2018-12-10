@@ -1,5 +1,5 @@
 use crate::parser::{LuaAsmParser, LuaFile};
-use crate::writer::{WriteNumber, Writer};
+use crate::writer::{WriteObj, Writer};
 use clap::{App, Arg, ArgMatches, SubCommand};
 use pest::Parser;
 use std::fs::File;

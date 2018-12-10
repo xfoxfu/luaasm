@@ -31,16 +31,16 @@ impl Writer {
     }
 }
 
-pub trait WriteNumber<T> {
+pub trait WriteObj<T> {
     fn write(&mut self, num: T);
 }
 
-impl WriteNumber<u8> for Writer {
+impl WriteObj<u8> for Writer {
     fn write(&mut self, num: u8) {
         self.vec_mut().push(num)
     }
 }
-impl WriteNumber<u32> for Writer {
+impl WriteObj<u32> for Writer {
     fn write(&mut self, num: u32) {
         self.vec_mut().push((num & 0xFF) as u8);
         self.vec_mut().push(((num & (0xFF << 8)) >> 8) as u8);
@@ -48,7 +48,7 @@ impl WriteNumber<u32> for Writer {
         self.vec_mut().push(((num & (0xFF << 24)) >> 24) as u8);
     }
 }
-impl WriteNumber<u64> for Writer {
+impl WriteObj<u64> for Writer {
     fn write(&mut self, num: u64) {
         self.vec_mut().push((num & 0xFF) as u8);
         self.vec_mut().push(((num & (0xFF << 8)) >> 8) as u8);
@@ -60,12 +60,12 @@ impl WriteNumber<u64> for Writer {
         self.vec_mut().push(((num & (0xFF << 56)) >> 56) as u8);
     }
 }
-impl WriteNumber<f64> for Writer {
+impl WriteObj<f64> for Writer {
     fn write(&mut self, num: f64) {
         self.write(num.to_bits())
     }
 }
-impl WriteNumber<Vec<u8>> for Writer {
+impl WriteObj<Vec<u8>> for Writer {
     fn write(&mut self, mut num: Vec<u8>) {
         self.vec_mut().append(&mut num)
     }

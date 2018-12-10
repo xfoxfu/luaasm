@@ -1,112 +1,27 @@
 use crate::lua::lua52::LUA_OPCODE;
 use crate::lua::{InstMode, OpArgMode};
-use crate::writer::{WriteNumber, Writer};
+use crate::writer::{WriteObj, Writer};
 use pest::iterators::Pair;
+
+mod constant;
+pub use self::constant::Constant;
+mod func;
+pub use self::func::Func;
+mod instruction;
+pub use self::instruction::Instruction;
+mod luafile;
+pub use self::luafile::LuaFile;
+mod r#ref;
+pub use self::r#ref::Ref;
+mod upvalue;
+pub use self::upvalue::Upvalue;
+mod value;
+pub use self::value::Value;
 
 #[derive(Parser)]
 #[grammar = "luaasm.pest"] // relative to src
 pub struct LuaAsmParser;
 
-#[derive(Debug)]
-pub struct LuaFile(pub Func);
-#[derive(Debug)]
-pub struct Func {
-    pub args: u8,
-    pub is_varg: bool,
-    pub register_count: u8,
-    pub constants: Vec<Constant>,
-    pub upvalues: Vec<Upvalue>,
-    pub instructions: Vec<Instruction>,
-    pub funcs: Vec<Func>,
-}
-#[derive(Debug)]
-pub enum Ref {
-    Register(u32),
-    Constant(u32),
-    Upvalue(u32),
-    ImmediateValue(i32),
-    Stack(u32),
-}
-#[derive(Debug)]
-pub struct Constant(pub Ref, pub Value);
-#[derive(Debug)]
-pub enum Value {
-    Nil,
-    Bool(bool),
-    Num(f64),
-    Str(String),
-}
-#[derive(Debug)]
-pub struct Upvalue(pub Ref, pub Ref, pub Ref);
-#[derive(Debug)]
-pub struct Instruction {
-    pub op: String,
-    pub params: Vec<Ref>,
-}
-
-impl From<Pair<'_, Rule>> for LuaFile {
-    fn from(pest: Pair<'_, Rule>) -> LuaFile {
-        parse_file(pest)
-    }
-}
-pub fn parse_file(pair: Pair<Rule>) -> LuaFile {
-    LuaFile(parse_fn(pair.into_inner().next().unwrap()))
-}
-pub fn parse_fn(pair: Pair<Rule>) -> Func {
-    let mut pair = pair.into_inner();
-    let args = pair.next().unwrap().as_str().parse().unwrap();
-    let is_varg = match pair.next().unwrap().as_str() {
-        "true" => true,
-        "false" => false,
-        s => panic!("invalid varg={}", s),
-    };
-    let constants = parse_sec_const(pair.next().unwrap());
-    let upvalues = parse_sec_upval(pair.next().unwrap());
-    let instructions = parse_sec_inst(pair.next().unwrap());
-    let funcs = parse_sec_func(pair.next().unwrap());
-    Func {
-        args,
-        is_varg,
-        register_count: count_registers(&instructions),
-        constants,
-        upvalues,
-        instructions,
-        funcs,
-    }
-}
-pub fn count_registers(insts: &[Instruction]) -> u8 {
-    let mut count = 0u8;
-    for inst in insts {
-        for p in &inst.params {
-            if let Ref::Register(v) = p {
-                if *v as u8 > count {
-                    count = *v as u8;
-                }
-            }
-        }
-    }
-    count + 1
-}
-pub fn parse_sec_const(pair: Pair<Rule>) -> Vec<Constant> {
-    pair.into_inner().map(parse_decl_const).collect()
-}
-pub fn parse_decl_const(pair: Pair<Rule>) -> Constant {
-    let mut pair = pair.into_inner();
-    let refstr = pair.next().unwrap().as_str();
-    let refnum = refstr.split_at(1).1.parse().unwrap();
-    let value = match pair.next().unwrap().as_str() {
-        "nil" => Value::Nil,
-        "bool" => match pair.next().unwrap().as_str() {
-            "True" => Value::Bool(true),
-            "False" => Value::Bool(false),
-            _ => unreachable!(),
-        },
-        "string" => Value::Str(pair.next().unwrap().as_str().into()),
-        "number" => Value::Num(pair.next().unwrap().as_str().parse().unwrap()),
-        _ => unreachable!(),
-    };
-    Constant(Ref::Constant(refnum), value)
-}
 pub fn parse_sec_upval(pair: Pair<Rule>) -> Vec<Upvalue> {
     pair.into_inner().map(parse_decl_upval).collect()
 }
