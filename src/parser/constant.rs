@@ -23,3 +23,10 @@ impl From<Pair<'_, Rule>> for Constant {
         Constant(Ref::Constant(refnum), value)
     }
 }
+
+impl Into<Vec<u8>> for Constant {
+    fn into(self) -> Vec<u8> {
+        let Constant(_ref, val) = self;
+        val.into()
+    }
+}

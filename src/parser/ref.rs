@@ -6,3 +6,12 @@ pub enum Ref {
     ImmediateValue(i32),
     Stack(u32),
 }
+
+impl Into<i32> for Ref {
+    fn into(self) -> i32 {
+        match self {
+            Ref::Constant(v) | Ref::Register(v) | Ref::Stack(v) | Ref::Upvalue(v) => v as i32,
+            Ref::ImmediateValue(v) => v,
+        }
+    }
+}

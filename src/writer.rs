@@ -29,35 +29,56 @@ impl Writer {
     pub fn write_to_file(&self, file: &mut std::fs::File) -> Result<(), std::io::Error> {
         file.write_all(&self.vec)
     }
+    pub fn write_u8(&mut self, num: u8) {
+        self.vec_mut().push(num)
+    }
 }
 
 pub trait WriteObj<T> {
-    fn write(&mut self, num: T);
+    fn write(&mut self, obj: T);
 }
 
 impl WriteObj<u8> for Writer {
     fn write(&mut self, num: u8) {
-        self.vec_mut().push(num)
+        self.write_u8(num)
     }
 }
 impl WriteObj<u32> for Writer {
     fn write(&mut self, num: u32) {
-        self.vec_mut().push((num & 0xFF) as u8);
-        self.vec_mut().push(((num & (0xFF << 8)) >> 8) as u8);
-        self.vec_mut().push(((num & (0xFF << 16)) >> 16) as u8);
-        self.vec_mut().push(((num & (0xFF << 24)) >> 24) as u8);
+        if self.endian {
+            self.vec_mut().push(((num & (0xFF << 24)) >> 24) as u8);
+            self.vec_mut().push(((num & (0xFF << 16)) >> 16) as u8);
+            self.vec_mut().push(((num & (0xFF << 8)) >> 8) as u8);
+            self.vec_mut().push((num & 0xFF) as u8);
+        } else {
+            self.vec_mut().push((num & 0xFF) as u8);
+            self.vec_mut().push(((num & (0xFF << 8)) >> 8) as u8);
+            self.vec_mut().push(((num & (0xFF << 16)) >> 16) as u8);
+            self.vec_mut().push(((num & (0xFF << 24)) >> 24) as u8);
+        }
     }
 }
 impl WriteObj<u64> for Writer {
     fn write(&mut self, num: u64) {
-        self.vec_mut().push((num & 0xFF) as u8);
-        self.vec_mut().push(((num & (0xFF << 8)) >> 8) as u8);
-        self.vec_mut().push(((num & (0xFF << 16)) >> 16) as u8);
-        self.vec_mut().push(((num & (0xFF << 24)) >> 24) as u8);
-        self.vec_mut().push(((num & (0xFF << 32)) >> 32) as u8);
-        self.vec_mut().push(((num & (0xFF << 40)) >> 40) as u8);
-        self.vec_mut().push(((num & (0xFF << 48)) >> 48) as u8);
-        self.vec_mut().push(((num & (0xFF << 56)) >> 56) as u8);
+        if self.endian {
+            self.vec_mut().push(((num & (0xFF << 56)) >> 56) as u8);
+            self.vec_mut().push(((num & (0xFF << 48)) >> 48) as u8);
+            self.vec_mut().push(((num & (0xFF << 40)) >> 40) as u8);
+            self.vec_mut().push(((num & (0xFF << 32)) >> 32) as u8);
+            self.vec_mut().push(((num & (0xFF << 24)) >> 24) as u8);
+            self.vec_mut().push(((num & (0xFF << 16)) >> 16) as u8);
+            self.vec_mut().push(((num & (0xFF << 8)) >> 8) as u8);
+            self.vec_mut().push((num & 0xFF) as u8);
+        } else {
+            self.vec_mut().push((num & 0xFF) as u8);
+            self.vec_mut().push(((num & (0xFF << 8)) >> 8) as u8);
+            self.vec_mut().push(((num & (0xFF << 16)) >> 16) as u8);
+            self.vec_mut().push(((num & (0xFF << 24)) >> 24) as u8);
+            self.vec_mut().push(((num & (0xFF << 32)) >> 32) as u8);
+            self.vec_mut().push(((num & (0xFF << 40)) >> 40) as u8);
+            self.vec_mut().push(((num & (0xFF << 48)) >> 48) as u8);
+            self.vec_mut().push(((num & (0xFF << 56)) >> 56) as u8);
+        }
     }
 }
 impl WriteObj<f64> for Writer {
@@ -68,5 +89,18 @@ impl WriteObj<f64> for Writer {
 impl WriteObj<Vec<u8>> for Writer {
     fn write(&mut self, mut num: Vec<u8>) {
         self.vec_mut().append(&mut num)
+    }
+}
+
+pub trait WriteTo {
+    fn write_to(self, target: &mut Writer);
+}
+
+impl<T> WriteTo for T
+where
+    Writer: WriteObj<T>,
+{
+    fn write_to(self, target: &mut Writer) {
+        target.write(self)
     }
 }
