@@ -4,20 +4,20 @@ use std::io::Write;
 
 pub struct Writer {
     vec: Vec<u8>,
-    endian: bool, // true for big-endian
+    big_endian: bool, // true for big-endian
 }
 
 impl Writer {
     pub fn new() -> Self {
         Writer {
             vec: Vec::new(),
-            endian: false,
+            big_endian: false,
         }
     }
-    pub fn endian(self, endian: bool) -> Self {
+    pub fn big_endian(self, big_endian: bool) -> Self {
         Writer {
             vec: self.vec,
-            endian,
+            big_endian,
         }
     }
     pub fn into_inner(self) -> Vec<u8> {
@@ -45,7 +45,7 @@ impl WriteObj<u8> for Writer {
 }
 impl WriteObj<u32> for Writer {
     fn write(&mut self, num: u32) {
-        if self.endian {
+        if self.big_endian {
             self.vec_mut().push(((num & (0xFF << 24)) >> 24) as u8);
             self.vec_mut().push(((num & (0xFF << 16)) >> 16) as u8);
             self.vec_mut().push(((num & (0xFF << 8)) >> 8) as u8);
@@ -60,7 +60,7 @@ impl WriteObj<u32> for Writer {
 }
 impl WriteObj<u64> for Writer {
     fn write(&mut self, num: u64) {
-        if self.endian {
+        if self.big_endian {
             self.vec_mut().push(((num & (0xFF << 56)) >> 56) as u8);
             self.vec_mut().push(((num & (0xFF << 48)) >> 48) as u8);
             self.vec_mut().push(((num & (0xFF << 40)) >> 40) as u8);

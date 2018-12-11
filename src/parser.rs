@@ -1,3 +1,7 @@
+#[derive(Parser)]
+#[grammar = "luaasm.pest"] // relative to src
+pub struct LuaAsmParser;
+
 mod constant;
 pub use self::constant::Constant;
 mod func;
@@ -13,6 +17,3 @@ pub use self::upvalue::Upvalue;
 mod value;
 pub use self::value::Value;
 
-#[derive(Parser)]
-#[grammar = "luaasm.pest"] // relative to src
-pub struct LuaAsmParser;

@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 pub mod lua52;
 
 #[derive(Clone)]
@@ -17,4 +19,15 @@ pub enum InstMode {
     iAsBx,
     #[allow(non_camel_case_types)]
     iAx,
+}
+
+#[derive(Debug)]
+pub enum LuaVersion {
+    Lua52,
+}
+
+#[derive(Debug)]
+pub enum Endian {
+    BigEndian,
+    LittleEndian,
 }

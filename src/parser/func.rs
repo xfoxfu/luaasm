@@ -112,17 +112,25 @@ impl Into<Vec<u8>> for Func {
         //     [int nupvals]
         writer.write(self.upvalues.len() as u32);
         //     ... upvals:
+        for upval in self.upvalues {
+            let v: Vec<u8> = upval.into();
+            writer.write(v);
+        }
 
         //     [string source] | debug info
+        writer.write(0u32);
         //     [int nlines]
+        writer.write(0u32);
         //     ... lines:
         //         [int line]
         //     [int nlocals]
+        writer.write(0u32);
         //     ... locals:
         //         [string name] | debug info
         //         [int startpc]
         //         [int endpc]
         //     [int nupvalnames]
+        writer.write(0u32);
         //     ... upvalnames:
         //         [string name] | debug info
         writer.into_inner()
