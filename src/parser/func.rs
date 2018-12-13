@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 
 use super::{
-    arg_info, const_decl, instruction, space, space_or_comment, upval_decl, ArgInfo, ConstDecl,
-    Instruction, UpvalDecl,
+    arg_info, const_decl, instruction, space, space_or_comment, upval_decl, ArgInfo, AstCheck,
+    ConstDecl, Instruction, UpvalDecl,
 };
 use crate::writer::{WriteObj, Writer};
 use nom::{call, named, tag};
@@ -71,6 +71,12 @@ named!(
         })
 ));
 
+impl AstCheck for Func {
+    fn check(&self) -> Result<(), String> {
+        self.arg_info.check() // TODO: check instructions
+    }
+}
+
 impl Into<Vec<u8>> for Func {
     fn into(self) -> Vec<u8> {
         let mut writer = Writer::new();
@@ -81,7 +87,7 @@ impl Into<Vec<u8>> for Func {
         //     [int line_end]   | debug info
         writer.write(0u32);
         //     [u8 nparams]
-        writer.write(self.arg_info.args);
+        writer.write(self.arg_info.args.len() as u8);
         //     [u8 varargflags]
         writer.write(if self.arg_info.is_varg { 1u8 } else { 0u8 });
         //     [u8 nregisters]

@@ -42,3 +42,7 @@ pub use self::func::Func;
 
 mod file;
 pub use self::file::{parse_file, File};
+
+pub trait AstCheck {
+    fn check(&self) -> Result<(), String>;
+}

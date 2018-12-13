@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use super::num_f64;
+use super::{num_f64, AstCheck};
 use crate::writer::{WriteObj, Writer};
 use nom::{
     alt, call, delimited, error_node_position, error_position, escaped_transform, is_not, map,
@@ -46,6 +46,12 @@ named!(
     pub const_val(&str) -> ConstValue,
     alt!(const_nil | const_bool | const_num | const_string)
 );
+
+impl AstCheck for ConstValue {
+    fn check(&self) -> Result<(), String> {
+        Ok(())
+    }
+}
 
 impl Into<Vec<u8>> for ConstValue {
     fn into(self) -> Vec<u8> {

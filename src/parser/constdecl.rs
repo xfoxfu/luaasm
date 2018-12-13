@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use super::{const_val, ref_constant, space, ConstValue, Ref};
+use super::{const_val, ref_constant, space, AstCheck, ConstValue, Ref};
 use nom::{call, named, tag};
 use serde_derive::Serialize;
 
@@ -19,6 +19,12 @@ named!(
         (ConstDecl { id, value })
     )
 );
+
+impl AstCheck for ConstDecl {
+    fn check(&self) -> Result<(), String> {
+        Ok(())
+    }
+}
 
 impl Into<Vec<u8>> for ConstDecl {
     fn into(self) -> Vec<u8> {

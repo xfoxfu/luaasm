@@ -1,3 +1,4 @@
+use crate::parser::AstCheck;
 use crate::writer::{WriteObj, Writer};
 use clap::{App, Arg, ArgMatches, SubCommand};
 use std::fs::File;
@@ -36,6 +37,7 @@ pub fn run(args: &ArgMatches) {
     file.read_to_string(&mut contents)
         .expect("cannot read file content");
     let (_, file) = crate::parser::parse_file(&contents).unwrap();
+    file.check().unwrap();
     // print!("{}", serde_json::to_string(&result).unwrap());
 
     // file

@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use super::{func_decl, Func};
+use super::{func_decl, AstCheck, Func};
 use crate::writer::{WriteObj, Writer};
 use nom::{call, named};
 
@@ -13,6 +13,12 @@ named!(
     pub parse_file(&str) -> File,
     map!(func_decl, |f| File { main: f })
 );
+
+impl AstCheck for File {
+    fn check(&self) -> Result<(), String> {
+        self.main.check()
+    }
+}
 
 impl Into<Vec<u8>> for File {
     fn into(self) -> Vec<u8> {

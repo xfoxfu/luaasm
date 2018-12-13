@@ -1,9 +1,9 @@
-use super::ref_register;
+use super::{ref_register, AstCheck, Ref};
 use nom::{call, named, tag};
 
 #[derive(Serialize, Debug, PartialEq)]
 pub struct ArgInfo {
-    pub args: u8,
+    pub args: Vec<Ref>,
     pub is_varg: bool,
 }
 
@@ -19,8 +19,23 @@ named!(
             map!(ws!(separated_list!(tag!(","), ref_register)), |v| (v, false))
         ),
         tag!(")")
-    )), |(v_reg, is_varg)| ArgInfo { args: v_reg.len() as u8, is_varg })
+    )), |(args, is_varg)| ArgInfo { args, is_varg })
 );
+
+impl AstCheck for ArgInfo {
+    fn check(&self) -> Result<(), String> {
+        for (i, r) in self.args.iter().enumerate() {
+            if let Ref::Register(v) = r {
+                if *v != i as u8 {
+                    return Err(format!("mismatched register R{} at position {}", v, i));
+                }
+            } else {
+                unreachable!()
+            }
+        }
+        Ok(())
+    }
+}
 
 #[test]
 fn parse_arg_empty() {
@@ -28,7 +43,7 @@ fn parse_arg_empty() {
     assert_eq!(
         res,
         ArgInfo {
-            args: 0,
+            args: vec![],
             is_varg: false
         }
     );
@@ -39,7 +54,7 @@ fn parse_arg_reg() {
     assert_eq!(
         res,
         ArgInfo {
-            args: 3,
+            args: vec![Ref::Register(0), Ref::Register(1), Ref::Register(2)],
             is_varg: false
         }
     );
@@ -50,7 +65,7 @@ fn parse_arg_varg() {
     assert_eq!(
         res,
         ArgInfo {
-            args: 0,
+            args: vec![],
             is_varg: true
         }
     );
@@ -61,7 +76,7 @@ fn parse_arg_reg_varg() {
     assert_eq!(
         res,
         ArgInfo {
-            args: 2,
+            args: vec![Ref::Register(0), Ref::Register(1)],
             is_varg: true
         }
     );
