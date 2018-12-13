@@ -1,7 +1,5 @@
-use crate::parser::{LuaAsmParser, LuaFile};
 use crate::writer::{WriteObj, Writer};
 use clap::{App, Arg, ArgMatches, SubCommand};
-use pest::Parser;
 use std::fs::File;
 use std::io::Read;
 
@@ -37,11 +35,7 @@ pub fn run(args: &ArgMatches) {
     let mut contents = String::new();
     file.read_to_string(&mut contents)
         .expect("cannot read file content");
-    let file: LuaFile = LuaAsmParser::parse(crate::parser::Rule::File, &contents)
-        .unwrap()
-        .next()
-        .unwrap()
-        .into();
+    let (_, file) = crate::parser::parse_file(&contents).unwrap();
     // print!("{}", serde_json::to_string(&result).unwrap());
 
     // file

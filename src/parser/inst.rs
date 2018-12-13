@@ -1,46 +1,36 @@
-use super::{Ref, Rule};
+#![allow(dead_code)]
+
+use super::{reference, Ref};
 use crate::lua::{lua52::LUA_OPCODE, InstMode, OpArgMode};
-use pest::iterators::Pair;
+use nom::{alpha, call, do_parse_sep, named, opt, sep, space, tuple_sep, wrap_sep};
+use serde_derive::Serialize;
 
-#[derive(Debug)]
+#[derive(Serialize, Debug, PartialEq)]
 pub struct Instruction {
-    pub op: String,
-    pub params: Vec<Ref>,
+    pub opcode: String,
+    pub args: (Option<Ref>, Option<Ref>, Option<Ref>),
 }
 
-impl From<Pair<'_, Rule>> for Instruction {
-    fn from(pair: Pair<'_, Rule>) -> Self {
-        let mut pair = pair.into_inner();
-        let name = pair.next().unwrap().as_str().into();
-        Instruction {
-            op: name,
-            params: pair
-                .map(|param| {
-                    let num: i32 = param
-                        .as_str()
-                        .parse()
-                        .unwrap_or_else(|_| param.as_str().split_at(1).1.parse().unwrap());
-                    match param.as_rule() {
-                        Rule::RefRegister => Ref::Register(num as u32),
-                        Rule::RefConst => Ref::Constant(num as u32),
-                        Rule::RefUpvalue => Ref::Upvalue(num as u32),
-                        Rule::RefImValue => Ref::ImmediateValue(num),
-                        _ => unreachable!(),
-                    }
-                })
-                .collect(),
-        }
-    }
-}
+named!(pub instruction(&str) -> Instruction,
+  do_parse!(
+    opcode: map!(alpha, |s| s.to_string()) >>
+    many0!(space) >>
+    args: tuple!(
+        opt!(terminated!(reference, many0!(space))),
+        opt!(terminated!(reference, many0!(space))),
+        opt!(terminated!(reference, many0!(space)))
+    ) >>
+    (Instruction { opcode, args })
+));
 
 impl Into<u32> for Instruction {
     fn into(self) -> u32 {
-        let (opmode_op, _opmode_t, _opmode_a, opmode_b, opmode_c, opmode_inst) =
-            LUA_OPCODE.get(self.op.as_str()).expect("invalid op code");
-        let mut param_iter = self.params.into_iter();
-        let (opa, mut opb, mut opc) = (param_iter.next(), param_iter.next(), param_iter.next());
+        let (opmode_op, _opmode_t, _opmode_a, opmode_b, opmode_c, opmode_inst) = LUA_OPCODE
+            .get(self.opcode.as_str())
+            .expect("invalid op code");
+        let (opa, mut opb, mut opc) = self.args;
         // println!("{:?} {:?} {:?}", opa, opb, opc);
-        if self.op.as_str() == "TEST" || self.op.as_str() == "TFORCALL" {
+        if self.opcode.as_str() == "TEST" || self.opcode.as_str() == "TFORCALL" {
             std::mem::swap(&mut opb, &mut opc);
         }
 
@@ -49,10 +39,10 @@ impl Into<u32> for Instruction {
         if let InstMode::iAsBx = opmode_inst {
             offset_b = 0;
             offset_c = 0
-        } else if self.op.as_str() != "LOADK" {
+        } else if self.opcode.as_str() != "LOADK" {
             match opmode_b {
                 OpArgMode::OpArgK | OpArgMode::OpArgR => {
-                    offset_b = if let Some(Ref::Constant(_)) = opb.as_ref() {
+                    offset_b = if let Some(Ref::Const(_)) = opb.as_ref() {
                         0x100
                     } else {
                         0
@@ -62,7 +52,7 @@ impl Into<u32> for Instruction {
             }
             match opmode_c {
                 OpArgMode::OpArgK | OpArgMode::OpArgR => {
-                    offset_c = if let Some(Ref::Constant(_)) = opc.as_ref() {
+                    offset_c = if let Some(Ref::Const(_)) = opc.as_ref() {
                         0x100
                     } else {
                         0
@@ -132,4 +122,46 @@ impl Into<u32> for Instruction {
 
         val
     }
+}
+
+#[test]
+fn parse_instruction() {
+    let (_, res) = instruction("GETTABUP R0 U0 K0\0").unwrap();
+    assert_eq!(
+        res,
+        Instruction {
+            opcode: "GETTABUP".to_string(),
+            args: (
+                Some(Ref::Register(0)),
+                Some(Ref::Upvalue(0)),
+                Some(Ref::Const(0))
+            )
+        }
+    );
+}
+#[test]
+fn parse_instruction_2() {
+    let (_, res) = instruction("GETTABUP R0 U0 -15\0").unwrap();
+    assert_eq!(
+        res,
+        Instruction {
+            opcode: "GETTABUP".to_string(),
+            args: (
+                Some(Ref::Register(0)),
+                Some(Ref::Upvalue(0)),
+                Some(Ref::Immediate(-15))
+            )
+        }
+    );
+}
+#[test]
+fn parse_instruction_3() {
+    let (_, res) = instruction("GETTABUP R0 U0\0").unwrap();
+    assert_eq!(
+        res,
+        Instruction {
+            opcode: "GETTABUP".to_string(),
+            args: (Some(Ref::Register(0)), Some(Ref::Upvalue(0)), None)
+        }
+    );
 }

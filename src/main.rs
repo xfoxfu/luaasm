@@ -1,5 +1,7 @@
 #[macro_use]
-extern crate pest_derive;
+extern crate nom;
+#[macro_use]
+extern crate serde_derive;
 
 use clap::App;
 

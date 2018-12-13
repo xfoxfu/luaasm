@@ -1,75 +1,162 @@
-use super::{Constant, Instruction, Ref, Rule, Upvalue};
-use crate::writer::{WriteObj, Writer};
-use pest::iterators::Pair;
+#![allow(dead_code)]
 
-#[derive(Debug)]
-pub struct Func {
+use super::num_u8;
+use super::{const_decl, instruction, ref_register, upval_decl, ConstDecl, Instruction, UpvalDecl,space,comment,space_or_comment};
+use nom::{call, named, tag};
+use crate::writer::{WriteObj, Writer};
+
+#[derive(Serialize, Debug, PartialEq)]
+pub struct ArgInfo {
     pub args: u8,
     pub is_varg: bool,
+}
+
+named!(
+    arg_info(&str) -> ArgInfo,
+    map!(delimited!(
+        tag!("("),
+        separated_pair!(
+            num_u8, ws!(tag!(",")), alt!(tag!("true") | tag!("false"))
+        ),
+        tag!(")")
+    ),
+    (|(v_reg, is_varg)| ArgInfo { 
+        args: v_reg,
+        is_varg: match is_varg {
+            "true" => true,
+            "false" => false,
+            _ => unreachable!(),
+        } 
+    })
+));
+/*
+named!(
+    arg_info(&str) -> ArgInfo,
+    map!(sp!(delimited!(
+        tag!("("),
+        alt!(
+            map!(sp!(separated_list!(tag!(","), ref_register)), |v| (v, false)) |
+            map!(tag!("__va_args__"), |_| (vec![], true)) |
+            sp!(map!(separated_pair!(
+                sp!(separated_list!(tag!(","), ref_register)),
+                tag!(","), tag!("__va_args__")
+            ), |(v, _)| (v, true)))
+        ),
+        tag!(")")
+    )), |(v_reg, is_varg)| ArgInfo { args: v_reg.len() as u8, is_varg })
+);
+named!(test(&str) -> bool, map!(tag!("__va_args__"), |_| true));
+
+#[test]
+fn parse_arg_empty() {
+    println!("{:?}", test("__va_args__\0").unwrap());
+    let (_, res) = arg_info("()\0").unwrap();
+    assert_eq!(
+        res,
+        ArgInfo {
+            args: 0,
+            is_varg: false
+        }
+    );
+}
+#[test]
+fn parse_arg_reg() {
+    let (_, res) = arg_info("(R0, R1, R2)\0").unwrap();
+    assert_eq!(
+        res,
+        ArgInfo {
+            args: 3,
+            is_varg: false
+        }
+    );
+}
+#[test]
+fn parse_arg_varg() {
+    let (_, res) = arg_info("(__va_args__)\0").unwrap();
+    assert_eq!(
+        res,
+        ArgInfo {
+            args: 0,
+            is_varg: true
+        }
+    );
+}
+#[test]
+fn parse_arg_reg_varg() {
+    let (_, res) = arg_info("(R0, R1, __va_args__)\0").unwrap();
+    assert_eq!(
+        res,
+        ArgInfo {
+            args: 2,
+            is_varg: true
+        }
+    );
+}
+*/
+
+#[derive(Serialize, Debug, PartialEq)]
+pub struct Func {
+    pub arg_info: ArgInfo,
     pub register_count: u8,
-    pub constants: Vec<Constant>,
-    pub upvalues: Vec<Upvalue>,
+    pub constants: Vec<ConstDecl>,
+    pub upvalues: Vec<UpvalDecl>,
     pub instructions: Vec<Instruction>,
     pub funcs: Vec<Func>,
 }
 
-impl From<Pair<'_, Rule>> for Func {
-    fn from(pair: Pair<'_, Rule>) -> Func {
-        let mut pair = pair.into_inner();
-        let args = pair.next().unwrap().as_str().parse().unwrap();
-        let is_varg = match pair.next().unwrap().as_str() {
-            "true" => true,
-            "false" => false,
-            s => panic!("invalid varg={}", s),
+fn count_registers(insts: &[Instruction]) -> u8 {
+    use super::Ref;
+
+    let mut count = 0u8;
+    for inst in insts {
+        let mut handle = |arg: &Option<Ref>| {
+            if let Some(Ref::Register(id)) = arg {
+                if *id as u8 > count {
+                    count = *id as u8
+                }
+            }
         };
-        let constants = pair
-            .next()
-            .unwrap()
-            .into_inner()
-            .map(|c| c.into())
-            .collect();
-        let upvalues = pair
-            .next()
-            .unwrap()
-            .into_inner()
-            .map(|c| c.into())
-            .collect();
-        let instructions: Vec<Instruction> = pair
-            .next()
-            .unwrap()
-            .into_inner()
-            .map(|c| c.into())
-            .collect();
-        let funcs = pair
-            .next()
-            .unwrap()
-            .into_inner()
-            .map(|c| c.into())
-            .collect();
-        Func {
-            args,
-            is_varg,
+        let (arg_1, arg_2, arg_3) = &inst.args;
+        handle(arg_1);
+        handle(arg_2);
+        handle(arg_3);
+    }
+    count + 1
+}
+
+named!(
+    pub func_decl(&str) -> Func,
+    do_parse!(
+        many0!(space_or_comment) >>
+        tag!(".fn") >>
+        many0!(space) >>
+        arg_info: arg_info >>
+        many0!(space_or_comment) >>
+        tag!(".instruction") >>
+        many0!(space_or_comment) >>
+        instructions: many0!(terminated!(instruction, many0!(space_or_comment))) >>
+        many0!(space_or_comment) >>
+        tag!(".const") >>
+        many0!(space_or_comment) >>
+        constants: many0!(terminated!(const_decl, many0!(space_or_comment))) >>
+        many0!(space_or_comment) >>
+        tag!(".upvalue") >>
+        many0!(space_or_comment) >>
+        upvalues: many0!(terminated!(upval_decl, many0!(space_or_comment))) >>
+        many0!(space_or_comment) >>
+        funcs: many0!(func_decl) >>
+        many0!(space_or_comment) >>
+        tag!(".endfn") >>
+        // many0!(space_or_comment) >>
+        (Func {
             register_count: count_registers(&instructions),
+            arg_info,
             constants,
             upvalues,
             instructions,
             funcs,
-        }
-    }
-}
-fn count_registers(insts: &[Instruction]) -> u8 {
-    let mut count = 0u8;
-    for inst in insts {
-        for p in &inst.params {
-            if let Ref::Register(v) = p {
-                if *v as u8 > count {
-                    count = *v as u8;
-                }
-            }
-        }
-    }
-    count + 1
-}
+        })
+));
 
 impl Into<Vec<u8>> for Func {
     fn into(self) -> Vec<u8> {
@@ -81,9 +168,9 @@ impl Into<Vec<u8>> for Func {
         //     [int line_end]   | debug info
         writer.write(0u32);
         //     [u8 nparams]
-        writer.write(self.args);
+        writer.write(self.arg_info.args);
         //     [u8 varargflags]
-        writer.write(if self.is_varg { 1u8 } else { 0u8 });
+        writer.write(if self.arg_info.is_varg { 1u8 } else { 0u8 });
         //     [u8 nregisters]
         writer.write(self.register_count);
         //     [int ninstructions]

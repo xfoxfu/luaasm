@@ -1,26 +1,20 @@
-use super::{Func, Rule};
-use crate::lua::{Endian, LuaVersion};
+#![allow(dead_code)]
+
+use super::{func_decl, Func};
 use crate::writer::{WriteObj, Writer};
-use pest::iterators::Pair;
+use nom::{call, named};
 
-#[derive(Debug)]
-pub struct LuaFile {
+#[derive(Serialize, Debug, PartialEq)]
+pub struct File {
     pub main: Func,
-    pub endian: Endian,
-    pub lua_version: LuaVersion,
 }
 
-impl From<Pair<'_, Rule>> for LuaFile {
-    fn from(pest: Pair<'_, Rule>) -> LuaFile {
-        LuaFile {
-            main: pest.into_inner().next().unwrap().into(),
-            endian: Endian::LittleEndian,
-            lua_version: LuaVersion::Lua52,
-        }
-    }
-}
+named!(
+    pub parse_file(&str) -> File,
+    map!(func_decl, |f| File { main: f })
+);
 
-impl Into<Vec<u8>> for LuaFile {
+impl Into<Vec<u8>> for File {
     fn into(self) -> Vec<u8> {
         // common header
         let mut writer = Writer::new();
@@ -30,17 +24,12 @@ impl Into<Vec<u8>> for LuaFile {
         writer.write(0x75u8);
         writer.write(0x61u8);
         // [u8 version] Version number (0x52 for Lua 5.2, etc)
-        match self.lua_version {
-            LuaVersion::Lua52 => writer.write(0x52u8),
-        }
-        // [u8 impl] Implementation (0 for reference impl)
+        writer.write(0x52u8); // TODO: support other version
+                              // [u8 impl] Implementation (0 for reference impl)
         writer.write(0x00u8);
         // [u8 endian] Big-endian flag
-        match &self.endian {
-            Endian::LittleEndian => writer.write(0x01u8),
-            Endian::BigEndian => writer.write(0x00u8),
-        }
-        // [u8 intsize] Size of integers (usually 4)
+        writer.write(0x01u8); // TODO: support big-endian
+                              // [u8 intsize] Size of integers (usually 4)
         writer.write(0x04u8);
         // [u8 size_t] Size of pointers
         writer.write(0x04u8);
