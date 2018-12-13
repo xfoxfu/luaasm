@@ -22,7 +22,7 @@ named!(
 
 impl Into<Vec<u8>> for ConstDecl {
     fn into(self) -> Vec<u8> {
-        let ConstDecl { id, value } = self;
+        let ConstDecl { value, .. } = self;
         value.into()
     }
 }

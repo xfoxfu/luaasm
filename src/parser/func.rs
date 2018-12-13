@@ -1,9 +1,11 @@
 #![allow(dead_code)]
 
 use super::num_u8;
-use super::{const_decl, instruction, ref_register, upval_decl, ConstDecl, Instruction, UpvalDecl,space,comment,space_or_comment};
-use nom::{call, named, tag};
+use super::{
+    const_decl, instruction, space, space_or_comment, upval_decl, ConstDecl, Instruction, UpvalDecl,
+};
 use crate::writer::{WriteObj, Writer};
+use nom::{call, named, tag};
 
 #[derive(Serialize, Debug, PartialEq)]
 pub struct ArgInfo {
@@ -20,13 +22,13 @@ named!(
         ),
         tag!(")")
     ),
-    (|(v_reg, is_varg)| ArgInfo { 
+    (|(v_reg, is_varg)| ArgInfo {
         args: v_reg,
         is_varg: match is_varg {
             "true" => true,
             "false" => false,
             _ => unreachable!(),
-        } 
+        }
     })
 ));
 /*

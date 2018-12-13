@@ -1,5 +1,6 @@
 #[macro_use]
 mod whitespace;
+#[allow(unused_imports)]
 use self::whitespace::{comment, space, space_or_comment};
 
 mod r#ref;

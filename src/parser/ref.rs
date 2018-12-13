@@ -5,10 +5,10 @@ use nom::{alt, call, complete, do_parse, error_position, named, tag};
 
 #[derive(Serialize, Debug, PartialEq)]
 pub enum Ref {
-  Register(u8),
-  Const(u8),
-  Upvalue(u8),
-  Immediate(i16),
+    Register(u8),
+    Const(u8),
+    Upvalue(u8),
+    Immediate(i16),
 }
 
 named!(pub ref_register(&str) -> Ref,
@@ -40,41 +40,41 @@ named!(pub reference(&str) -> Ref,
 );
 
 impl Into<i32> for Ref {
-  fn into(self) -> i32 {
-    match self {
-      Ref::Const(v) | Ref::Register(v) | Ref::Upvalue(v) => v as i32,
-      Ref::Immediate(v) => v as i32,
+    fn into(self) -> i32 {
+        match self {
+            Ref::Const(v) | Ref::Register(v) | Ref::Upvalue(v) => i32::from(v),
+            Ref::Immediate(v) => i32::from(v),
+        }
     }
-  }
 }
 
 #[test]
 fn parse_register() {
-  let (_, res) = reference("R15;").unwrap();
-  assert_eq!(res, Ref::Register(15));
+    let (_, res) = reference("R15;").unwrap();
+    assert_eq!(res, Ref::Register(15));
 }
 #[test]
 fn parse_const() {
-  let (_, res) = reference("K15;").unwrap();
-  assert_eq!(res, Ref::Const(15));
+    let (_, res) = reference("K15;").unwrap();
+    assert_eq!(res, Ref::Const(15));
 }
 #[test]
 fn parse_upval() {
-  let (_, res) = reference("U15;").unwrap();
-  assert_eq!(res, Ref::Upvalue(15));
+    let (_, res) = reference("U15;").unwrap();
+    assert_eq!(res, Ref::Upvalue(15));
 }
 #[test]
 fn parse_immediate_postive() {
-  let (_, res) = reference("15;").unwrap();
-  assert_eq!(res, Ref::Immediate(15));
+    let (_, res) = reference("15;").unwrap();
+    assert_eq!(res, Ref::Immediate(15));
 }
 #[test]
 fn parse_immediate_negative() {
-  let (_, res) = reference("-1;").unwrap();
-  assert_eq!(res, Ref::Immediate(-1));
+    let (_, res) = reference("-1;").unwrap();
+    assert_eq!(res, Ref::Immediate(-1));
 }
 #[test]
 fn parse_immediate_negative_b() {
-  let (_, res) = reference("15 R0").unwrap();
-  assert_eq!(res, Ref::Immediate(15));
+    let (_, res) = reference("15 R0").unwrap();
+    assert_eq!(res, Ref::Immediate(15));
 }

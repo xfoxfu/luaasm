@@ -30,9 +30,7 @@ impl Into<Vec<u8>> for UpvalDecl {
     fn into(self) -> Vec<u8> {
         let mut writer = Writer::new();
         let UpvalDecl {
-            id,
-            stack_up,
-            register,
+            stack_up, register, ..
         } = self;
         //         [u8 stack]
         writer.write(stack_up);

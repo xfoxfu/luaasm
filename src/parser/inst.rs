@@ -2,7 +2,7 @@
 
 use super::{reference, Ref};
 use crate::lua::{lua52::LUA_OPCODE, InstMode, OpArgMode};
-use nom::{alpha, call, do_parse_sep, named, opt, sep, space, tuple_sep, wrap_sep};
+use nom::{alpha, call, named, opt, space};
 use serde_derive::Serialize;
 
 #[derive(Serialize, Debug, PartialEq)]
