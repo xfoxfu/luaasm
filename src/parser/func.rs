@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 
-use super::num_u8;
 use super::{
-    const_decl, instruction, space, space_or_comment, upval_decl, ConstDecl, Instruction, UpvalDecl,
+    const_decl, instruction, ref_register, space, space_or_comment, upval_decl, ConstDecl,
+    Instruction, UpvalDecl,
 };
 use crate::writer::{WriteObj, Writer};
 use nom::{call, named, tag};
@@ -15,43 +15,21 @@ pub struct ArgInfo {
 
 named!(
     arg_info(&str) -> ArgInfo,
-    map!(delimited!(
+    map!(ws!(delimited!(
         tag!("("),
-        separated_pair!(
-            num_u8, ws!(tag!(",")), alt!(tag!("true") | tag!("false"))
-        ),
-        tag!(")")
-    ),
-    (|(v_reg, is_varg)| ArgInfo {
-        args: v_reg,
-        is_varg: match is_varg {
-            "true" => true,
-            "false" => false,
-            _ => unreachable!(),
-        }
-    })
-));
-/*
-named!(
-    arg_info(&str) -> ArgInfo,
-    map!(sp!(delimited!(
-        tag!("("),
-        alt!(
-            map!(sp!(separated_list!(tag!(","), ref_register)), |v| (v, false)) |
-            map!(tag!("__va_args__"), |_| (vec![], true)) |
-            sp!(map!(separated_pair!(
-                sp!(separated_list!(tag!(","), ref_register)),
-                tag!(","), tag!("__va_args__")
-            ), |(v, _)| (v, true)))
+        alt_complete!(
+            map!(pair!(
+                many0!(terminated!(ws!(ref_register), tag!(","))),
+                ws!(tag!("__va_args__"))
+            ), |(v, _)| (v, true)) |
+            map!(ws!(separated_list!(tag!(","), ref_register)), |v| (v, false))
         ),
         tag!(")")
     )), |(v_reg, is_varg)| ArgInfo { args: v_reg.len() as u8, is_varg })
 );
-named!(test(&str) -> bool, map!(tag!("__va_args__"), |_| true));
 
 #[test]
 fn parse_arg_empty() {
-    println!("{:?}", test("__va_args__\0").unwrap());
     let (_, res) = arg_info("()\0").unwrap();
     assert_eq!(
         res,
@@ -94,7 +72,6 @@ fn parse_arg_reg_varg() {
         }
     );
 }
-*/
 
 #[derive(Serialize, Debug, PartialEq)]
 pub struct Func {
