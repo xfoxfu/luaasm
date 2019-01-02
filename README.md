@@ -1,4 +1,6 @@
 # luaasm
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fcoderfox%2Fluaasm.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fcoderfox%2Fluaasm?ref=badge_shield)
+
 
 Assembler for Lua Bytecode
 
@@ -30,3 +32,7 @@ U0 = L1 R23
 - function with variable arguments should be declared like `.fn(R0, __va_args__)`
 - nested function should be placed between end of `.upvalue` and `.endfn`
 - you may produce luaasm samples with [PyLuaDec-fork](https://github.com/coderfox/PyLuaDec) `python3 dis.py <LUA_BYTECODE_FILE> luaasm`
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fcoderfox%2Fluaasm.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fcoderfox%2Fluaasm?ref=badge_large)
