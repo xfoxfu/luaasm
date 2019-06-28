@@ -1,4 +1,5 @@
 use nom::*;
+use nom::character::complete::{not_line_ending,line_ending};
 
 named!(pub space<&str, ()>, value!((), one_of!(" \t\n")));
 named!(pub comment(&str) -> (), value!((), delimited!(tag!(";"), not_line_ending, line_ending)));

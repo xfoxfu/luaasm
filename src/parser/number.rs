@@ -1,8 +1,9 @@
-use nom::{digit, recognize_float};
+use nom::number::complete::{ recognize_float};
+use nom::character::complete::digit1;
 named!(integer_str(&str) -> &str, recognize!(
     pair!(
         opt!(alt!(tag!("+") | tag!("-"))),
-        digit
+        digit1
 )));
 named!(pub num_u8(&str)-> u8, flat_map!(recognize_float, parse_to!(u8)));
 named!(pub num_u32(&str)-> u32, flat_map!(recognize_float, parse_to!(u32)));

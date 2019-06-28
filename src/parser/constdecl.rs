@@ -4,7 +4,7 @@ use super::{const_val, ref_constant, space, AstCheck, ConstValue, Ref};
 use nom::{call, named, tag};
 use serde_derive::Serialize;
 
-#[derive(Serialize, Debug, PartialEq)]
+#[derive(Serialize, Debug, PartialEq, Clone)]
 pub struct ConstDecl {
     pub id: Ref,
     pub value: ConstValue,

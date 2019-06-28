@@ -1,7 +1,7 @@
 use super::{ref_register, AstCheck, Ref};
 use nom::{call, named, tag};
 
-#[derive(Serialize, Debug, PartialEq)]
+#[derive(Serialize, Debug, PartialEq, Clone)]
 pub struct ArgInfo {
     pub args: Vec<Ref>,
     pub is_varg: bool,
@@ -11,7 +11,7 @@ named!(
     pub arg_info(&str) -> ArgInfo,
     map!(ws!(delimited!(
         tag!("("),
-        alt_complete!(
+        alt!(
             map!(pair!(
                 many0!(terminated!(ws!(ref_register), tag!(","))),
                 ws!(tag!("__va_args__"))

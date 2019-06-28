@@ -4,7 +4,7 @@ use super::{func_decl, AstCheck, Func};
 use crate::writer::{WriteObj, Writer};
 use nom::{call, named};
 
-#[derive(Serialize, Debug, PartialEq)]
+#[derive(Serialize, Debug, PartialEq, Clone)]
 pub struct File {
     pub main: Func,
 }

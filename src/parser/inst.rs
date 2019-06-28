@@ -2,10 +2,11 @@
 
 use super::{reference, Ref};
 use crate::lua::{lua52::LUA_OPCODE, InstMode, OpArgMode};
-use nom::{alpha, call, named, opt, space};
+use nom::{call, named, opt};
+use nom::character::complete::{alpha1,space1};
 use serde_derive::Serialize;
 
-#[derive(Serialize, Debug, PartialEq)]
+#[derive(Serialize, Debug, PartialEq, Clone)]
 pub struct Instruction {
     pub opcode: String,
     pub args: (Option<Ref>, Option<Ref>, Option<Ref>),

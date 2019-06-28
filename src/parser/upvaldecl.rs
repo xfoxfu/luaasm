@@ -4,7 +4,7 @@ use super::{num_u8, ref_register, ref_upvalue, space, Ref};
 use crate::writer::{WriteObj, Writer};
 use nom::{call, named, tag};
 
-#[derive(Serialize, Debug, PartialEq)]
+#[derive(Serialize, Debug, PartialEq, Clone)]
 pub struct UpvalDecl {
     pub id: Ref,
     pub stack_up: u8,

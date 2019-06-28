@@ -7,7 +7,7 @@ use nom::{
     named, tag, tuple_parser, value,
 };
 
-#[derive(Serialize, Debug, PartialEq)]
+#[derive(Serialize, Debug, PartialEq, Clone)]
 pub enum ConstValue {
     Nil,
     Bool(bool),

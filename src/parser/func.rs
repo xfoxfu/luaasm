@@ -7,7 +7,7 @@ use super::{
 use crate::writer::{WriteObj, Writer};
 use nom::{call, named, tag};
 
-#[derive(Serialize, Debug, PartialEq)]
+#[derive(Serialize, Debug, PartialEq, Clone)]
 pub struct Func {
     pub arg_info: ArgInfo,
     pub register_count: u8,

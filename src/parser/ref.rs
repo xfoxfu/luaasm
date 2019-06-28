@@ -3,7 +3,7 @@
 use super::{num_i16, num_u8};
 use nom::{alt, call, complete, do_parse, error_position, named, tag};
 
-#[derive(Serialize, Debug, PartialEq)]
+#[derive(Serialize, Debug, PartialEq, Clone)]
 pub enum Ref {
     Register(u8),
     Const(u8),
@@ -36,7 +36,7 @@ named!(pub ref_immediate(&str) -> Ref,
   map!(num_i16, |v| { Ref::Immediate(v) })
 );
 named!(pub reference(&str) -> Ref,
-    alt_complete!(ref_register | ref_constant | ref_upvalue | ref_immediate)
+    alt!(ref_register | ref_constant | ref_upvalue | ref_immediate)
 );
 
 impl Into<i32> for Ref {
