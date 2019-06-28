@@ -4,7 +4,7 @@ use super::{num_f64, AstCheck};
 use crate::writer::{WriteObj, Writer};
 use nom::{
     alt, call, delimited, error_node_position, error_position, escaped_transform, is_not, map,
-    named, tag, tuple_parser, value,
+    named, tag, tuple_parser, types::CompleteStr, value,
 };
 
 #[derive(Serialize, Debug, PartialEq)]
@@ -16,21 +16,21 @@ pub enum ConstValue {
 }
 
 named!(
-    pub const_nil(&str) -> ConstValue,
+    pub const_nil(CompleteStr) -> ConstValue,
     value!(ConstValue::Nil, tag!("nil"))
 );
 named!(
-    pub const_bool(&str) -> ConstValue,
+    pub const_bool(CompleteStr) -> ConstValue,
     alt!(
         value!(ConstValue::Bool(true), tag!("true")) | 
         value!(ConstValue::Bool(false), tag!("false"))
 ));
 named!(
-    pub const_num(&str) -> ConstValue,
+    pub const_num(CompleteStr) -> ConstValue,
     map!(num_f64, ConstValue::Num)
 );
 named!(
-    pub const_string(&str) -> ConstValue,
+    pub const_string(CompleteStr) -> ConstValue,
     map!(delimited!(
         tag!("\""),
         escaped_transform!(is_not!("\\\""), '\\', alt!(
@@ -43,7 +43,7 @@ named!(
 );
 
 named!(
-    pub const_val(&str) -> ConstValue,
+    pub const_val(CompleteStr) -> ConstValue,
     alt!(const_nil | const_bool | const_num | const_string)
 );
 
@@ -91,36 +91,36 @@ impl Into<Vec<u8>> for ConstValue {
 
 #[test]
 fn const_val_nil() {
-    let (_, res) = const_val("nil").unwrap();
+    let (_, res) = const_val(CompleteStr("nil")).unwrap();
     assert_eq!(res, ConstValue::Nil);
 }
 #[test]
 fn const_val_bool_true() {
-    let (_, res) = const_val("true").unwrap();
+    let (_, res) = const_val(CompleteStr("true")).unwrap();
     assert_eq!(res, ConstValue::Bool(true));
 }
 #[test]
 fn const_val_bool_false() {
-    let (_, res) = const_val("false").unwrap();
+    let (_, res) = const_val(CompleteStr("false")).unwrap();
     assert_eq!(res, ConstValue::Bool(false));
 }
 #[test]
 fn const_val_num_int() {
-    let (_, res) = const_val("15\0").unwrap();
+    let (_, res) = const_val(CompleteStr("15\0")).unwrap();
     assert_eq!(res, ConstValue::Num(15f64));
 }
 #[test]
 fn const_val_num_float() {
-    let (_, res) = const_val("125.7\0").unwrap();
+    let (_, res) = const_val(CompleteStr("125.7\0")).unwrap();
     assert_eq!(res, ConstValue::Num(125.7));
 }
 #[test]
 fn const_val_string() {
-    let (_, res) = const_val("\"Hello world!\"\0").unwrap();
+    let (_, res) = const_val(CompleteStr("\"Hello world!\"\0")).unwrap();
     assert_eq!(res, ConstValue::Str("Hello world!".to_string()));
 }
 #[test]
 fn const_val_escape() {
-    let (_, res) = const_val("\"Hello \\\"world!\"\0").unwrap();
+    let (_, res) = const_val(CompleteStr("\"Hello \\\"world!\"\0")).unwrap();
     assert_eq!(res, ConstValue::Str("Hello \"world!".to_string()));
 }

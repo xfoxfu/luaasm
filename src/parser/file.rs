@@ -2,7 +2,7 @@
 
 use super::{func_decl, AstCheck, Func};
 use crate::writer::{WriteObj, Writer};
-use nom::{call, named};
+use nom::{call, named, types::CompleteStr};
 
 #[derive(Serialize, Debug, PartialEq)]
 pub struct File {
@@ -10,7 +10,7 @@ pub struct File {
 }
 
 named!(
-    pub parse_file(&str) -> File,
+    pub parse_file(CompleteStr) -> File,
     map!(func_decl, |f| File { main: f })
 );
 

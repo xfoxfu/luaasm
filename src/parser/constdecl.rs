@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use super::{const_val, ref_constant, space, AstCheck, ConstValue, Ref};
-use nom::{call, named, tag};
+use nom::{call, named, tag, types::CompleteStr};
 use serde_derive::Serialize;
 
 #[derive(Serialize, Debug, PartialEq)]
@@ -11,7 +11,7 @@ pub struct ConstDecl {
 }
 
 named!(
-    pub const_decl(&str) -> ConstDecl,
+    pub const_decl(CompleteStr) -> ConstDecl,
     do_parse!(
         id: delimited!(many0!(space), ref_constant, many0!(space)) >>
         tag!("=") >>
@@ -35,7 +35,7 @@ impl Into<Vec<u8>> for ConstDecl {
 
 #[test]
 fn const_decl_nil() {
-    let (_, res) = const_decl("K1 = nil\0").unwrap();
+    let (_, res) = const_decl(CompleteStr("K1 = nil\0")).unwrap();
     assert_eq!(
         res,
         ConstDecl {
@@ -46,7 +46,7 @@ fn const_decl_nil() {
 }
 #[test]
 fn const_decl_bool_true() {
-    let (_, res) = const_decl("K1 = true\0").unwrap();
+    let (_, res) = const_decl(CompleteStr("K1 = true\0")).unwrap();
     assert_eq!(
         res,
         ConstDecl {
@@ -57,7 +57,7 @@ fn const_decl_bool_true() {
 }
 #[test]
 fn const_decl_bool_false() {
-    let (_, res) = const_decl("K1 = false\0").unwrap();
+    let (_, res) = const_decl(CompleteStr("K1 = false\0")).unwrap();
     assert_eq!(
         res,
         ConstDecl {
@@ -68,7 +68,7 @@ fn const_decl_bool_false() {
 }
 #[test]
 fn const_decl_num_int() {
-    let (_, res) = const_decl("K1 = 15\0").unwrap();
+    let (_, res) = const_decl(CompleteStr("K1 = 15\0")).unwrap();
     assert_eq!(
         res,
         ConstDecl {
@@ -79,7 +79,7 @@ fn const_decl_num_int() {
 }
 #[test]
 fn const_decl_num_float() {
-    let (_, res) = const_decl("K1 = 125.7\0").unwrap();
+    let (_, res) = const_decl(CompleteStr("K1 = 125.7\0")).unwrap();
     assert_eq!(
         res,
         ConstDecl {
@@ -90,7 +90,7 @@ fn const_decl_num_float() {
 }
 #[test]
 fn const_decl_string() {
-    let (_, res) = const_decl("K1 = \"Hello world!\"\0").unwrap();
+    let (_, res) = const_decl(CompleteStr("K1 = \"Hello world!\"\0")).unwrap();
     assert_eq!(
         res,
         ConstDecl {
@@ -101,7 +101,7 @@ fn const_decl_string() {
 }
 #[test]
 fn const_decl_escape() {
-    let (_, res) = const_decl("K1 = \"Hello \\\"world!\"\0").unwrap();
+    let (_, res) = const_decl(CompleteStr("K1 = \"Hello \\\"world!\"\0")).unwrap();
     assert_eq!(
         res,
         ConstDecl {

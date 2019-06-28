@@ -5,7 +5,7 @@ use super::{
     ConstDecl, Instruction, UpvalDecl,
 };
 use crate::writer::{WriteObj, Writer};
-use nom::{call, named, tag};
+use nom::{call, named, tag, types::CompleteStr};
 
 #[derive(Serialize, Debug, PartialEq)]
 pub struct Func {
@@ -38,7 +38,7 @@ fn count_registers(insts: &[Instruction]) -> u8 {
 }
 
 named!(
-    pub func_decl(&str) -> Func,
+    pub func_decl(CompleteStr) -> Func,
     do_parse!(
         many0!(space_or_comment) >>
         tag!(".fn") >>

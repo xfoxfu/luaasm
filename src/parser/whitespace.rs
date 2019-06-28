@@ -1,27 +1,30 @@
+use nom::types::CompleteStr;
 use nom::*;
 
-named!(pub space<&str, ()>, value!((), one_of!(" \t\n")));
-named!(pub comment(&str) -> (), value!((), delimited!(tag!(";"), not_line_ending, line_ending)));
-named!(pub space_or_comment(&str) -> (), alt!(space | comment));
+named!(pub space<CompleteStr, ()>, value!((), one_of!(" \t\n")));
+named!(pub comment(CompleteStr) -> (), value!((), delimited!(tag!(";"), not_line_ending, line_ending)));
+named!(pub space_or_comment(CompleteStr) -> (), alt!(space | comment));
 
 #[test]
 fn test_comment() {
-    assert_eq!(
-        comment("; Function            function_0\n\0",).unwrap().0,
-        "\0"
-    );
+  assert_eq!(
+    comment(CompleteStr("; Function            function_0\n\0"))
+      .unwrap()
+      .0,
+    CompleteStr("\0")
+  );
 }
 #[test]
 fn test_space_comment() {
-    assert_eq!(
-        comment(
-            ";   [0] R2 := G[\"math\"]
-GETTABLE  R2 R2 K1      ;   [1] R2 := R2[\"random\"]\0",
-        )
-        .unwrap()
-        .0,
-        "GETTABLE  R2 R2 K1      ;   [1] R2 := R2[\"random\"]\0"
-    );
+  assert_eq!(
+    comment(CompleteStr(
+      ";   [0] R2 := G[\"math\"]
+GETTABLE  R2 R2 K1      ;   [1] R2 := R2[\"random\"]\0"
+    ),)
+    .unwrap()
+    .0,
+    CompleteStr("GETTABLE  R2 R2 K1      ;   [1] R2 := R2[\"random\"]\0")
+  );
 }
 
 /*

@@ -2,7 +2,7 @@
 
 use super::{num_u8, ref_register, ref_upvalue, space, Ref};
 use crate::writer::{WriteObj, Writer};
-use nom::{call, named, tag};
+use nom::{call, named, tag, types::CompleteStr};
 
 #[derive(Serialize, Debug, PartialEq)]
 pub struct UpvalDecl {
@@ -12,7 +12,7 @@ pub struct UpvalDecl {
 }
 
 named!(
-    pub upval_decl(&str) -> UpvalDecl,
+    pub upval_decl(CompleteStr) -> UpvalDecl,
     do_parse!(
         id: ref_upvalue >>
         many0!(space) >>
@@ -43,7 +43,7 @@ impl Into<Vec<u8>> for UpvalDecl {
 
 #[test]
 fn parse_upval_decl() {
-    let (_, res) = upval_decl("U0 = L1 R0\0").unwrap();
+    let (_, res) = upval_decl(CompleteStr("U0 = L1 R0\0")).unwrap();
     assert_eq!(
         res,
         UpvalDecl {

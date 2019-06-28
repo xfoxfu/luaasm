@@ -1,5 +1,5 @@
 use super::{ref_register, AstCheck, Ref};
-use nom::{call, named, tag};
+use nom::{call, named, tag, types::CompleteStr};
 
 #[derive(Serialize, Debug, PartialEq)]
 pub struct ArgInfo {
@@ -8,7 +8,7 @@ pub struct ArgInfo {
 }
 
 named!(
-    pub arg_info(&str) -> ArgInfo,
+    pub arg_info(CompleteStr) -> ArgInfo,
     map!(ws!(delimited!(
         tag!("("),
         alt_complete!(
@@ -39,7 +39,7 @@ impl AstCheck for ArgInfo {
 
 #[test]
 fn parse_arg_empty() {
-    let (_, res) = arg_info("()\0").unwrap();
+    let (_, res) = arg_info(CompleteStr("()\0")).unwrap();
     assert_eq!(
         res,
         ArgInfo {
@@ -50,7 +50,7 @@ fn parse_arg_empty() {
 }
 #[test]
 fn parse_arg_reg() {
-    let (_, res) = arg_info("(R0, R1, R2)\0").unwrap();
+    let (_, res) = arg_info(CompleteStr("(R0, R1, R2)\0")).unwrap();
     assert_eq!(
         res,
         ArgInfo {
@@ -61,7 +61,7 @@ fn parse_arg_reg() {
 }
 #[test]
 fn parse_arg_varg() {
-    let (_, res) = arg_info("(__va_args__)\0").unwrap();
+    let (_, res) = arg_info(CompleteStr("(__va_args__)\0")).unwrap();
     assert_eq!(
         res,
         ArgInfo {
@@ -72,7 +72,7 @@ fn parse_arg_varg() {
 }
 #[test]
 fn parse_arg_reg_varg() {
-    let (_, res) = arg_info("(R0, R1, __va_args__)\0").unwrap();
+    let (_, res) = arg_info(CompleteStr("(R0, R1, __va_args__)\0")).unwrap();
     assert_eq!(
         res,
         ArgInfo {
