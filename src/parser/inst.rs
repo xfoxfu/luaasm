@@ -2,7 +2,7 @@
 
 use super::{reference, Ref};
 use crate::lua::{lua52::LUA_OPCODE, InstMode, OpArgMode};
-use nom::{alpha, call, named, opt, space, types::CompleteStr};
+use nom::{alpha, call, named, opt, space};
 use serde_derive::Serialize;
 
 #[derive(Serialize, Debug, PartialEq)]
@@ -11,7 +11,7 @@ pub struct Instruction {
     pub args: (Option<Ref>, Option<Ref>, Option<Ref>),
 }
 
-named!(pub instruction(CompleteStr) -> Instruction,
+named!(pub instruction(&str) -> Instruction,
   do_parse!(
     opcode: map!(alpha, |s| s.to_string()) >>
     many0!(space) >>
@@ -126,7 +126,7 @@ impl Into<u32> for Instruction {
 
 #[test]
 fn parse_instruction() {
-    let (_, res) = instruction(CompleteStr("GETTABUP R0 U0 K0\0")).unwrap();
+    let (_, res) = instruction("GETTABUP R0 U0 K0\0").unwrap();
     assert_eq!(
         res,
         Instruction {
@@ -141,7 +141,7 @@ fn parse_instruction() {
 }
 #[test]
 fn parse_instruction_2() {
-    let (_, res) = instruction(CompleteStr("GETTABUP R0 U0 -15\0")).unwrap();
+    let (_, res) = instruction("GETTABUP R0 U0 -15\0").unwrap();
     assert_eq!(
         res,
         Instruction {
@@ -156,7 +156,7 @@ fn parse_instruction_2() {
 }
 #[test]
 fn parse_instruction_3() {
-    let (_, res) = instruction(CompleteStr("GETTABUP R0 U0\0")).unwrap();
+    let (_, res) = instruction("GETTABUP R0 U0\0").unwrap();
     assert_eq!(
         res,
         Instruction {

@@ -36,7 +36,7 @@ pub fn run(args: &ArgMatches) {
     let mut contents = String::new();
     file.read_to_string(&mut contents)
         .expect("cannot read file content");
-    let (_, file) = crate::parser::parse_file(nom::types::CompleteStr(&contents)).unwrap();
+    let (_, file) = crate::parser::parse_file(&contents).unwrap();
     file.check().unwrap();
     // print!("{}", serde_json::to_string(&result).unwrap());
 
