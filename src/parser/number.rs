@@ -1,23 +1,28 @@
-use nom::number::complete::{ recognize_float};
-use nom::character::complete::digit1;
-named!(integer_str(&str) -> &str, recognize!(
-    pair!(
-        opt!(alt!(tag!("+") | tag!("-"))),
-        digit1
-)));
-named!(pub num_u8(&str)-> u8, flat_map!(recognize_float, parse_to!(u8)));
-named!(pub num_u32(&str)-> u32, flat_map!(recognize_float, parse_to!(u32)));
-named!(pub num_i16(&str)-> i16, flat_map!(recognize_float, parse_to!(i16)));
-named!(pub num_i32(&str)-> i32, flat_map!(recognize_float, parse_to!(i32)));
-named!(pub num_f64(&str)-> f64, flat_map!(recognize_float, parse_to!(f64)));
+use super::ParseResult;
+use nom::combinator::*;
+use nom::number::complete::recognize_float;
+
+macro_rules! make_num_parser {
+    ($n:ident, $t:ty) => {
+        pub fn $n(input: &str) -> ParseResult<$t> {
+            map_res(recognize_float, |s: &str| s.parse::<$t>())(input)
+        }
+    };
+}
+
+make_num_parser!(num_u8, u8);
+// make_num_parser!(num_u32, u32);
+make_num_parser!(num_i16, i16);
+// make_num_parser!(num_i32, i32);
+make_num_parser!(num_f64, f64);
 
 #[test]
-fn parse_i32() {
-    let (_, res) = num_i32("15;").unwrap();
+fn parse_i16() {
+    let (_, res) = num_i16("15;").unwrap();
     assert_eq!(res, 15);
 }
 #[test]
-fn parse_i32_negative() {
-    let (_, res) = num_i32("-15;").unwrap();
+fn parse_i16_negative() {
+    let (_, res) = num_i16("-15;").unwrap();
     assert_eq!(res, -15);
 }

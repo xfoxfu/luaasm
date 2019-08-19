@@ -1,9 +1,11 @@
 #![allow(dead_code)]
 
+use super::ParseResult;
 use super::{reference, Ref};
 use crate::lua::{lua52::LUA_OPCODE, InstMode, OpArgMode};
-use nom::{call, named, opt};
-use nom::character::complete::{alpha1,space1};
+use nom::character::complete::*;
+use nom::combinator::*;
+use nom::sequence::*;
 use serde_derive::Serialize;
 
 #[derive(Serialize, Debug, PartialEq, Clone)]
@@ -12,23 +14,22 @@ pub struct Instruction {
     pub args: (Option<Ref>, Option<Ref>, Option<Ref>),
 }
 
-named!(pub instruction(&str) -> Instruction,
-  do_parse!(
-    opcode: map!(alpha, |s| s.to_string()) >>
-    many0!(space) >>
-    args: tuple!(
-        opt!(terminated!(reference, many0!(space))),
-        opt!(terminated!(reference, many0!(space))),
-        opt!(terminated!(reference, many0!(space)))
-    ) >>
-    (Instruction { opcode, args })
-));
+pub fn instruction(input: &str) -> ParseResult<Instruction> {
+    let (input, opcode) = map(alpha1, |s: &str| s.to_string())(input)?;
+    let (input, _) = space0(input)?;
+    let (input, args) = tuple((
+        opt(terminated(reference, space0)),
+        opt(terminated(reference, space0)),
+        opt(terminated(reference, space0)),
+    ))(input)?;
+    Ok((input, Instruction { opcode, args }))
+}
 
 impl Into<u32> for Instruction {
     fn into(self) -> u32 {
         let (opmode_op, _opmode_t, _opmode_a, opmode_b, opmode_c, opmode_inst) = LUA_OPCODE
             .get(self.opcode.as_str())
-            .expect("invalid op code");
+            .expect(format!("invalid op code {}", self.opcode).as_str());
         let (opa, mut opb, mut opc) = self.args;
         // println!("{:?} {:?} {:?}", opa, opb, opc);
         if self.opcode.as_str() == "TEST" || self.opcode.as_str() == "TFORCALL" {

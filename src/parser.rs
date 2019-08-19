@@ -1,6 +1,6 @@
 mod number;
 #[allow(unused_imports)]
-use self::number::{num_f64, num_i16, num_i32, num_u32, num_u8};
+use self::number::{num_f64, num_i16, num_u8};
 
 #[macro_use]
 mod whitespace;
@@ -46,3 +46,5 @@ pub use self::file::{parse_file, File};
 pub trait AstCheck {
     fn check(&self) -> Result<(), String>;
 }
+
+pub type ParseResult<'a, T> = nom::IResult<&'a str, T, nom::error::VerboseError<&'a str>>;

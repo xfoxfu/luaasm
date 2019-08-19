@@ -1,5 +1,12 @@
+use super::ParseResult;
 use super::{ref_register, AstCheck, Ref};
-use nom::{call, named, tag};
+use nom::branch::alt;
+use nom::bytes::complete::*;
+use nom::character::complete::*;
+use nom::combinator::*;
+use nom::multi::{many0, separated_list};
+use nom::sequence::*;
+use serde_derive::Serialize;
 
 #[derive(Serialize, Debug, PartialEq, Clone)]
 pub struct ArgInfo {
@@ -7,20 +14,28 @@ pub struct ArgInfo {
     pub is_varg: bool,
 }
 
-named!(
-    pub arg_info(&str) -> ArgInfo,
-    map!(ws!(delimited!(
-        tag!("("),
-        alt!(
-            map!(pair!(
-                many0!(terminated!(ws!(ref_register), tag!(","))),
-                ws!(tag!("__va_args__"))
-            ), |(v, _)| (v, true)) |
-            map!(ws!(separated_list!(tag!(","), ref_register)), |v| (v, false))
+pub fn arg_info(input: &str) -> ParseResult<ArgInfo> {
+    map(
+        delimited(
+            tag("("),
+            alt((
+                map(
+                    pair(
+                        many0(delimited(space0, ref_register, tag(","))),
+                        preceded(space0, tag("__va_args__")),
+                    ),
+                    |(v, _)| (v, true),
+                ),
+                map(
+                    separated_list(tag(","), delimited(space0, ref_register, space0)),
+                    |v| (v, false),
+                ),
+            )),
+            tag(")"),
         ),
-        tag!(")")
-    )), |(args, is_varg)| ArgInfo { args, is_varg })
-);
+        |(args, is_varg)| ArgInfo { args, is_varg },
+    )(input)
+}
 
 impl AstCheck for ArgInfo {
     fn check(&self) -> Result<(), String> {

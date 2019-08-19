@@ -1,8 +1,10 @@
 #![allow(dead_code)]
 
-use super::{num_u8, ref_register, ref_upvalue, space, Ref};
+use super::ParseResult;
+use super::{num_u8, ref_register, ref_upvalue, Ref};
 use crate::writer::{WriteObj, Writer};
-use nom::{call, named, tag};
+use nom::bytes::complete::tag;
+use nom::character::complete::*;
 
 #[derive(Serialize, Debug, PartialEq, Clone)]
 pub struct UpvalDecl {
@@ -11,20 +13,24 @@ pub struct UpvalDecl {
     pub register: Ref,
 }
 
-named!(
-    pub upval_decl(&str) -> UpvalDecl,
-    do_parse!(
-        id: ref_upvalue >>
-        many0!(space) >>
-        tag!("=") >>
-        many0!(space) >>
-        tag!("L") >>
-        stack_up: num_u8 >>
-        many0!(space) >>
-        register: ref_register >>
-        (UpvalDecl { id, stack_up, register })
-    )
-);
+pub fn upval_decl(input: &str) -> ParseResult<UpvalDecl> {
+    let (input, id) = ref_upvalue(input)?;
+    let (input, _) = space0(input)?;
+    let (input, _) = tag("=")(input)?;
+    let (input, _) = space0(input)?;
+    let (input, _) = tag("L")(input)?;
+    let (input, stack_up) = num_u8(input)?;
+    let (input, _) = space0(input)?;
+    let (input, register) = ref_register(input)?;
+    Ok((
+        input,
+        UpvalDecl {
+            id,
+            stack_up,
+            register,
+        },
+    ))
+}
 
 impl Into<Vec<u8>> for UpvalDecl {
     fn into(self) -> Vec<u8> {

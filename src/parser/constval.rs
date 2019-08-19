@@ -1,11 +1,13 @@
 #![allow(dead_code)]
 
-use super::{num_f64, AstCheck};
+use super::{num_f64, AstCheck, ParseResult};
 use crate::writer::{WriteObj, Writer};
-use nom::{
-    alt, call, delimited, error_node_position, error_position, escaped_transform, is_not, map,
-    named, tag, tuple_parser, value,
-};
+use nom::branch::alt;
+use nom::bytes::complete::escaped_transform;
+use nom::bytes::complete::is_not;
+use nom::bytes::complete::tag;
+use nom::combinator::*;
+use nom::sequence::delimited;
 
 #[derive(Serialize, Debug, PartialEq, Clone)]
 pub enum ConstValue {
@@ -15,37 +17,40 @@ pub enum ConstValue {
     Str(String),
 }
 
-named!(
-    pub const_nil(&str) -> ConstValue,
-    value!(ConstValue::Nil, tag!("nil"))
-);
-named!(
-    pub const_bool(&str) -> ConstValue,
-    alt!(
-        value!(ConstValue::Bool(true), tag!("true")) | 
-        value!(ConstValue::Bool(false), tag!("false"))
-));
-named!(
-    pub const_num(&str) -> ConstValue,
-    map!(num_f64, ConstValue::Num)
-);
-named!(
-    pub const_string(&str) -> ConstValue,
-    map!(delimited!(
-        tag!("\""),
-        escaped_transform!(is_not!("\\\""), '\\', alt!(
-            tag!("\\") => { |_| "\\" } |
-            tag!("\"") => { |_| "\"" } |
-            tag!("n")  => { |_| "\n" }
-        )),
-        tag!("\"")
-    ), |v| ConstValue::Str(v.to_string()))
-);
+pub fn const_nil(input: &str) -> ParseResult<ConstValue> {
+    value(ConstValue::Nil, tag("nil"))(input)
+}
+pub fn const_bool(input: &str) -> ParseResult<ConstValue> {
+    alt((
+        value(ConstValue::Bool(true), tag("true")),
+        value(ConstValue::Bool(false), tag("false")),
+    ))(input)
+}
+pub fn const_num(input: &str) -> ParseResult<ConstValue> {
+    map(num_f64, ConstValue::Num)(input)
+}
 
-named!(
-    pub const_val(&str) -> ConstValue,
-    alt!(const_nil | const_bool | const_num | const_string)
-);
+pub fn const_string(input: &str) -> ParseResult<ConstValue> {
+    map(
+        delimited(
+            tag("\""),
+            escaped_transform(
+                is_not("\\\""),
+                '\\',
+                map(alt((tag("\\"), tag("\""), tag("n"))), |v| match v {
+                    "n" => "\n",
+                    val => val,
+                }),
+            ),
+            tag("\""),
+        ),
+        |v| ConstValue::Str(v.to_string()),
+    )(input)
+}
+
+pub fn const_val(input: &str) -> ParseResult<ConstValue> {
+    alt((const_nil, const_bool, const_num, const_string))(input)
+}
 
 impl AstCheck for ConstValue {
     fn check(&self) -> Result<(), String> {

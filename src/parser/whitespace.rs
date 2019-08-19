@@ -1,9 +1,22 @@
-use nom::*;
-use nom::character::complete::{not_line_ending,line_ending};
+use super::ParseResult;
+use nom::branch::*;
+use nom::bytes::complete::*;
+use nom::character::complete::*;
+use nom::character::complete::{line_ending, not_line_ending};
 
-named!(pub space<&str, ()>, value!((), one_of!(" \t\n")));
-named!(pub comment(&str) -> (), value!((), delimited!(tag!(";"), not_line_ending, line_ending)));
-named!(pub space_or_comment(&str) -> (), alt!(space | comment));
+use nom::sequence::*;
+pub fn space(input: &str) -> ParseResult<()> {
+    let (input, _) = one_of(" \t\n")(input)?;
+    Ok((input, ()))
+}
+pub fn comment(input: &str) -> ParseResult<()> {
+    let (input, _) = delimited(tag(";"), not_line_ending, line_ending)(input)?;
+    Ok((input, ()))
+}
+pub fn space_or_comment(input: &str) -> ParseResult<()> {
+    let (input, _) = alt((space, comment))(input)?;
+    Ok((input, ()))
+}
 
 #[test]
 fn test_comment() {

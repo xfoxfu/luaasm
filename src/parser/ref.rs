@@ -1,7 +1,11 @@
 #![allow(dead_code)]
 
+use super::ParseResult;
 use super::{num_i16, num_u8};
-use nom::{alt, call, complete, do_parse, error_position, named, tag};
+use nom::branch::alt;
+use nom::bytes::complete::*;
+use nom::combinator::*;
+use serde_derive::Serialize;
 
 #[derive(Serialize, Debug, PartialEq, Clone)]
 pub enum Ref {
@@ -11,33 +15,27 @@ pub enum Ref {
     Immediate(i16),
 }
 
-named!(pub ref_register(&str) -> Ref,
-  do_parse!(
-    tag!("R") >>
-    id: num_u8 >>
-    (Ref::Register(id))
-  )
-);
-named!(pub ref_constant(&str) -> Ref,
-  do_parse!(
-    tag!("K") >>
-    id: num_u8 >>
-    (Ref::Const(id))
-  )
-);
-named!(pub ref_upvalue(&str) -> Ref,
-  do_parse!(
-    tag!("U") >>
-    id: num_u8 >>
-    (Ref::Upvalue(id))
-  )
-);
-named!(pub ref_immediate(&str) -> Ref,
-  map!(num_i16, |v| { Ref::Immediate(v) })
-);
-named!(pub reference(&str) -> Ref,
-    alt!(ref_register | ref_constant | ref_upvalue | ref_immediate)
-);
+pub fn ref_register(input: &str) -> ParseResult<Ref> {
+    let (input, _) = tag("R")(input)?;
+    let (input, id) = num_u8(input)?;
+    Ok((input, Ref::Register(id)))
+}
+pub fn ref_constant(input: &str) -> ParseResult<Ref> {
+    let (input, _) = tag("K")(input)?;
+    let (input, id) = num_u8(input)?;
+    Ok((input, Ref::Const(id)))
+}
+pub fn ref_upvalue(input: &str) -> ParseResult<Ref> {
+    let (input, _) = tag("U")(input)?;
+    let (input, id) = num_u8(input)?;
+    Ok((input, Ref::Upvalue(id)))
+}
+pub fn ref_immediate(input: &str) -> ParseResult<Ref> {
+    map(num_i16, |v| Ref::Immediate(v))(input)
+}
+pub fn reference(input: &str) -> ParseResult<Ref> {
+    alt((ref_register, ref_constant, ref_upvalue, ref_immediate))(input)
+}
 
 impl Into<i32> for Ref {
     fn into(self) -> i32 {

@@ -1,7 +1,10 @@
 #![allow(dead_code)]
 
-use super::{const_val, ref_constant, space, AstCheck, ConstValue, Ref};
-use nom::{call, named, tag};
+use super::ParseResult;
+use super::{const_val, ref_constant, AstCheck, ConstValue, Ref};
+use nom::bytes::complete::*;
+use nom::character::complete::*;
+use nom::sequence::*;
 use serde_derive::Serialize;
 
 #[derive(Serialize, Debug, PartialEq, Clone)]
@@ -10,15 +13,15 @@ pub struct ConstDecl {
     pub value: ConstValue,
 }
 
-named!(
-    pub const_decl(&str) -> ConstDecl,
-    do_parse!(
-        id: delimited!(many0!(space), ref_constant, many0!(space)) >>
-        tag!("=") >>
-        value: delimited!(many0!(space), const_val, many0!(space)) >>
-        (ConstDecl { id, value })
-    )
-);
+pub fn const_decl(input: &str) -> ParseResult<ConstDecl> {
+    let (input, _) = space0(input)?;
+    let (input, id) = ref_constant(input)?;
+    let (input, _) = space0(input)?;
+    let (input, _) = tag("=")(input)?;
+    let (input, value) = delimited(space0, const_val, space0)(input)?;
+
+    Ok((input, ConstDecl { id, value }))
+}
 
 impl AstCheck for ConstDecl {
     fn check(&self) -> Result<(), String> {

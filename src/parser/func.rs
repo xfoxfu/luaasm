@@ -1,11 +1,14 @@
 #![allow(dead_code)]
 
+use super::ParseResult;
 use super::{
     arg_info, const_decl, instruction, space, space_or_comment, upval_decl, ArgInfo, AstCheck,
     ConstDecl, Instruction, UpvalDecl,
 };
 use crate::writer::{WriteObj, Writer};
-use nom::{call, named, tag};
+use nom::bytes::complete::*;
+use nom::multi::many0;
+use nom::sequence::*;
 
 #[derive(Serialize, Debug, PartialEq, Clone)]
 pub struct Func {
@@ -37,39 +40,41 @@ fn count_registers(insts: &[Instruction]) -> u8 {
     count + 1
 }
 
-named!(
-    pub func_decl(&str) -> Func,
-    do_parse!(
-        many0!(space_or_comment) >>
-        tag!(".fn") >>
-        many0!(space) >>
-        arg_info: arg_info >>
-        many0!(space_or_comment) >>
-        tag!(".instruction") >>
-        many0!(space_or_comment) >>
-        instructions: many0!(terminated!(instruction, many0!(space_or_comment))) >>
-        many0!(space_or_comment) >>
-        tag!(".const") >>
-        many0!(space_or_comment) >>
-        constants: many0!(terminated!(const_decl, many0!(space_or_comment))) >>
-        many0!(space_or_comment) >>
-        tag!(".upvalue") >>
-        many0!(space_or_comment) >>
-        upvalues: many0!(terminated!(upval_decl, many0!(space_or_comment))) >>
-        many0!(space_or_comment) >>
-        funcs: many0!(func_decl) >>
-        many0!(space_or_comment) >>
-        tag!(".endfn") >>
-        // many0!(space_or_comment) >>
-        (Func {
-            register_count: count_registers(&instructions),
+pub fn func_decl(input: &str) -> ParseResult<Func> {
+    let (input, _) = many0(space_or_comment)(input)?;
+    let (input, (arg_info, instructions, constants, upvalues, funcs, _)) = tuple((
+        delimited(
+            terminated(tag(".fn"), many0(space)),
             arg_info,
+            many0(space_or_comment),
+        ),
+        preceded(
+            terminated(tag(".instruction"), many0(space_or_comment)),
+            many0(terminated(instruction, many0(space_or_comment))),
+        ),
+        preceded(
+            terminated(tag(".const"), many0(space_or_comment)),
+            many0(terminated(const_decl, many0(space_or_comment))),
+        ),
+        preceded(
+            terminated(tag(".upvalue"), many0(space_or_comment)),
+            many0(terminated(upval_decl, many0(space_or_comment))),
+        ),
+        many0(terminated(func_decl, many0(space_or_comment))),
+        tag(".endfn"),
+    ))(input)?;
+    Ok((
+        input,
+        Func {
+            arg_info,
+            register_count: count_registers(&instructions),
             constants,
             upvalues,
             instructions,
             funcs,
-        })
-));
+        },
+    ))
+}
 
 impl AstCheck for Func {
     fn check(&self) -> Result<(), String> {

@@ -1,18 +1,18 @@
 #![allow(dead_code)]
 
+use super::ParseResult;
 use super::{func_decl, AstCheck, Func};
 use crate::writer::{WriteObj, Writer};
-use nom::{call, named};
+use nom::combinator::*;
 
 #[derive(Serialize, Debug, PartialEq, Clone)]
 pub struct File {
     pub main: Func,
 }
 
-named!(
-    pub parse_file(&str) -> File,
-    map!(func_decl, |f| File { main: f })
-);
+pub fn parse_file(input: &str) -> ParseResult<File> {
+    map(func_decl, |f| File { main: f })(input)
+}
 
 impl AstCheck for File {
     fn check(&self) -> Result<(), String> {
