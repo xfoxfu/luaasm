@@ -1,6 +1,8 @@
 use crate::parser::AstCheck;
 use crate::writer::{WriteObj, Writer};
 use clap::{App, Arg, ArgMatches, SubCommand};
+use nom::error::convert_error;
+use nom::Err;
 use std::fs::File;
 use std::io::Read;
 
@@ -36,21 +38,32 @@ pub fn run(args: &ArgMatches) {
     let mut contents = String::new();
     file.read_to_string(&mut contents)
         .expect("cannot read file content");
-    let (_, file) = crate::parser::parse_file(&contents).unwrap();
-    file.check().unwrap();
-    // print!("{}", serde_json::to_string(&result).unwrap());
+    match crate::parser::parse_file(&contents) {
+        Err(Err::Error(e)) | Err(Err::Failure(e)) => {
+            println!(
+                "An error occurred when parsing:\n{}",
+                convert_error(contents.as_str(), e)
+            );
+            return;
+        }
+        Ok((_, file)) => {
+            file.check().unwrap();
+            // print!("{}", serde_json::to_string(&result).unwrap());
 
-    // file
-    let mut writer = Writer::new();
-    let content: Vec<u8> = file.into();
-    writer.write(content);
+            // file
+            let mut writer = Writer::new();
+            let content: Vec<u8> = file.into();
+            writer.write(content);
 
-    // output result
-    let mut file = args
-        .value_of("output")
-        .and_then(|path| File::create(path).ok())
-        .expect("cannot open write file");
-    writer
-        .write_to_file(&mut file)
-        .expect("cannot write output");
+            // output result
+            let mut file = args
+                .value_of("output")
+                .and_then(|path| File::create(path).ok())
+                .expect("cannot open write file");
+            writer
+                .write_to_file(&mut file)
+                .expect("cannot write output");
+        }
+        _ => unreachable!(),
+    }
 }

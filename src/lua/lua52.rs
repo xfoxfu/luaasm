@@ -34,7 +34,7 @@ macro_rules! lua_opcode {
     let mut counter = 0;
     $(
       m.insert(stringify!($op), (counter, $flag1, $flag2, OpArgMode::$arg1, OpArgMode::$arg2, InstMode::$inst));
-      counter+=1;
+      counter += 1;
     )*
     m
   )
