@@ -6,7 +6,7 @@ use nom::character::complete::{line_ending, not_line_ending};
 
 use nom::sequence::*;
 pub fn space(input: &str) -> ParseResult<()> {
-    let (input, _) = one_of(" \t\n")(input)?;
+    let (input, _) = one_of(" \t\n\r")(input)?;
     Ok((input, ()))
 }
 pub fn comment(input: &str) -> ParseResult<()> {
@@ -35,6 +35,15 @@ GETTABLE  R2 R2 K1      ;   [1] R2 := R2[\"random\"]\0",
         .unwrap()
         .0,
         "GETTABLE  R2 R2 K1      ;   [1] R2 := R2[\"random\"]\0"
+    );
+}
+#[test]
+fn test_crlf() {
+    assert_eq!(
+        comment("; Function            function_0\r\n\0",)
+            .unwrap()
+            .0,
+        "\0"
     );
 }
 
