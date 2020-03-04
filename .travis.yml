@@ -1,0 +1,25 @@
+language: rust
+rust:
+  - stable
+  - beta
+  - nightly
+matrix:
+  allow_failures:
+    - rust: nightly
+  fast_finish: true
+os:
+  - linux
+  - osx
+before_deploy:
+  - mv target/release/luaasm "target/release/luaasm-$TRAVIS_TAG-$TRAVIS_OS_NAME"
+deploy:
+  - provider: releases
+    skip_cleanup: true
+    on:
+      tags: true
+      condition: "$TRAVIS_RUST_VERSION = stable"
+      branch: master
+    file:
+      - target/release/luaasm-*
+    api_key:
+      secure: # ;)
