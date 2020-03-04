@@ -10,6 +10,7 @@ matrix:
 os:
   - linux
   - osx
+  - windows
 before_deploy:
   - mv target/release/luaasm "target/release/luaasm-$TRAVIS_TAG-$TRAVIS_OS_NAME"
 deploy:
@@ -22,4 +23,4 @@ deploy:
     file:
       - target/release/luaasm-*
     api_key:
-      secure: # ;)
+      secure: "SE68mG8LRtKC4zonassJS92FQ0+Vi+8QagI/UG9EHKorb0Zy8AYLmXpZSgvKiC6oevO6oriNkeIDoYmRMFpUI0mca+4n8bYLcyaCni0NNmVXog6CKkAzUPtxqoP3EPaG7Z+8HqdVoOU1eykOz9OEss98Ebx+B2+exvv6ZB6u5OvnUQsfWkdtvbjkA76gm+URvZJCU2bQcGRhABKiHs5s+rryF6bZ51jI1B8mJVfVpXbwvwWcjf+DvYNdfTK9yZ/B/T/ETf0HUNLnSx4b56AfsZ4p7hnLZa3rQn9rC6UEorZL+Curn0l5vCv3ZebmCe0ifMLSzcWzayqCv5wCHtBR6nQmyIu+8xB4N6Xm7Gu4Tzx/Tf3AOhD/H67Od0FpwdZwSDzADcUAvNDHHUhlrlXEHAfypfAkPBJwTNVhqb5MpMUWuF7fQ3k/F0jtcrvmSGx7GuSH4u6Ph+b5Rd1M8JLsuITkrc+NfkzCTv8oQxljLsBZyO5gx+xw3SLYjlPzPzekHhxH6sbd1z87DCD8J3XxFDoGOcklU4JJsdL49gEKkOwsHUSw7eI4AfPSw4To9erJSipWrU2EpjdoBeLQ+xjwzGsuq3T2WUOS6s7+OT/bD/CtlDudOVWQXC71/c3/5hqvj3oEDUtlfZkSQ1+6aiWoJbDwzW/oD28MuOnUk7P5+1A="
