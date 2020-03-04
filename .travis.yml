@@ -22,6 +22,7 @@ deploy:
       tags: true
       condition: "$TRAVIS_RUST_VERSION = stable"
       branch: master
+    file_glob: true
     file:
       - target/release/luaasm-*
     api_key:
