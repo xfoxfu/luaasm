@@ -11,6 +11,8 @@ os:
   - linux
   - osx
   - windows
+before_script:
+  - cargo build --release --verbose
 before_deploy:
   - mv target/release/luaasm "target/release/luaasm-$TRAVIS_TAG-$TRAVIS_OS_NAME"
 deploy:
