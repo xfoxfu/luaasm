@@ -2,7 +2,7 @@
 
 use super::ParseResult;
 use super::{reference, Ref};
-use crate::lua::{lua52::LUA_OPCODE, InstMode, OpArgMode};
+use crate::lua::{InstMode, Lua52, OpArgMode, Target};
 use nom::character::complete::*;
 use nom::combinator::*;
 use nom::sequence::*;
@@ -27,9 +27,8 @@ pub fn instruction(input: &str) -> ParseResult<Instruction> {
 
 impl Into<u32> for Instruction {
     fn into(self) -> u32 {
-        let (opmode_op, _opmode_t, _opmode_a, opmode_b, opmode_c, opmode_inst) = LUA_OPCODE
-            .get(self.opcode.as_str())
-            .expect(format!("invalid op code {}", self.opcode).as_str());
+        let (opmode_op, _opmode_t, _opmode_a, opmode_b, opmode_c, opmode_inst) =
+            Lua52::opcode(self.opcode.as_str());
         let (opa, mut opb, mut opc) = self.args;
         // println!("{:?} {:?} {:?}", opa, opb, opc);
         if self.opcode.as_str() == "TEST" || self.opcode.as_str() == "TFORCALL" {
@@ -68,7 +67,7 @@ impl Into<u32> for Instruction {
         }
 
         let (op, a, b, c): (u32, i32, i32, i32) = (
-            *opmode_op,
+            opmode_op,
             opa.map(|v| v.into()).unwrap_or_else(|| 0),
             opb.map(|v| {
                 let r: i32 = v.into();

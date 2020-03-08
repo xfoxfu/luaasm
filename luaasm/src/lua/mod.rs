@@ -2,12 +2,14 @@
 
 pub mod lua52;
 
+pub use lua52::Lua52;
+
 #[derive(Clone)]
 pub enum OpArgMode {
-    OpArgN, // 参数未被使用
-    OpArgU, // 已使用参数
-    OpArgR, // 参数是寄存器或跳转偏移
-    OpArgK, // 参数是常量或寄存器常量
+    OpArgN, // unused argument
+    OpArgU, // used argument
+    OpArgR, // argument is register or jump offset
+    OpArgK, // argument is const or register const
 }
 #[derive(Clone)]
 pub enum InstMode {
@@ -30,4 +32,9 @@ pub enum LuaVersion {
 pub enum Endian {
     BigEndian,
     LittleEndian,
+}
+
+pub trait Target {
+    fn datatype(datatype: &str) -> isize;
+    fn opcode(opcode: &str) -> (u32, u8, u8, OpArgMode, OpArgMode, InstMode);
 }

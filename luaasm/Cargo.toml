@@ -1,0 +1,15 @@
+[package]
+name = "luaasm"
+version = "0.1.0"
+authors = ["Yuze Fu <i@xfox.me>"]
+edition = "2018"
+
+[dependencies]
+clap = "2.33.0"
+lazy_static = "1.3.0"
+nom = "5.0.0"
+serde = "1.0.99"
+serde_derive = "1.0.99"
+serde_json = "1.0.40"
+luaasm_derive = { path = "../luaasm_derive" }
+proc-macro-hack = "0.5.11"
