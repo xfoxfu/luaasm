@@ -52,7 +52,7 @@ impl Parse for Opcode {
         let inst_ident = input.parse::<Ident>()?;
 
         Ok(Opcode {
-            inst_name: String::from(&inst_ident.to_string().as_str()[2..]),
+            inst_name: String::from(&inst_ident.to_string().as_str()[3..]),
             opmode: opmode_paren.parse()?,
         })
     }
@@ -85,7 +85,7 @@ pub fn fn_impl_opcode(input: TokenStream) -> TokenStream {
         fn #var(opcode: &str) -> (u32, u8, u8, OpArgMode, OpArgMode, InstMode) {
             match opcode {
                 #(#quotes),*,
-                _ => panic!("invalid opcode"),
+                code => panic!("invalid opcode {}", code),
             }
         }
     })

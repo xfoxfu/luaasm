@@ -21,6 +21,7 @@ impl Target for Lua52 {
 
         #define LUA_NUMTYPES		9
     }
+
     impl_opcode! { opcode =>
     /*
     ** $Id: lopcodes.c,v 1.49 2012/05/14 13:34:18 roberto Exp $
