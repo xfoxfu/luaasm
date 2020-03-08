@@ -6,7 +6,7 @@ use syn::{
     parse_macro_input,
     punctuated::Punctuated,
     token::Paren,
-    Ident, LitInt, Token,
+    Error, Ident, LitInt, Token,
 };
 
 struct DataType {
@@ -22,7 +22,10 @@ struct MacroInput {
 impl Parse for DataType {
     fn parse(input: ParseStream) -> ParseResult<Self> {
         input.parse::<Token![#]>()?;
-        let _define = input.parse::<Ident>()?.to_string();
+        let define_ident = input.parse::<Ident>()?;
+        if define_ident != "define" {
+            return Err(Error::new(define_ident.span(), "Expected `define`"));
+        }
         let type_name = input.parse::<Ident>()?.to_string();
         let id;
         if input.peek(Paren) {

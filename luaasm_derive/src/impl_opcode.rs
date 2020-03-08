@@ -5,7 +5,7 @@ use syn::{
     parse::{Parse, ParseStream, Result as ParseResult},
     parse_macro_input,
     punctuated::Punctuated,
-    Ident, LitInt, Token,
+    Error, Ident, LitInt, Token,
 };
 
 struct Opcode {
@@ -43,8 +43,10 @@ impl Parse for Opmode {
 
 impl Parse for Opcode {
     fn parse(input: ParseStream) -> ParseResult<Self> {
-        let _opmode_str = input.parse::<Ident>()?.to_string();
-        // TODO: check it
+        let opmode_ident = input.parse::<Ident>()?;
+        if opmode_ident != "opmode" {
+            return Err(Error::new(opmode_ident.span(), "Expected `opmode`"));
+        }
 
         let opmode_paren;
         parenthesized![opmode_paren in input];
