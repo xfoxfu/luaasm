@@ -2,11 +2,11 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
     parenthesized,
-    parse::{Parse, ParseStream, Result as ParseResult},
     parse_macro_input,
     punctuated::Punctuated,
     Error, Ident, LitInt, Token,
 };
+use syn::parse::{Parse, ParseStream, Result as ParseResult};
 
 struct Opcode {
     inst_name: String,
@@ -69,7 +69,7 @@ impl Parse for MacroInput {
     }
 }
 
-pub fn fn_impl_opcode(input: TokenStream) -> TokenStream {
+pub fn fn_impl_opmode(input: TokenStream) -> TokenStream {
     let MacroInput { var, val } = parse_macro_input!(input as MacroInput);
     let mut counter = 0u32;
     let mut quotes = Vec::new();
@@ -79,12 +79,12 @@ pub fn fn_impl_opcode(input: TokenStream) -> TokenStream {
     } in val
     {
         quotes.push(quote! {
-            #inst_name => (#counter, #t, #a, OpArgMode::#b, OpArgMode::#c, InstMode::#mode)
+            #inst_name => (#counter, #t, #a, OpArgMask::#b, OpArgMask::#c, InstMode::#mode)
         });
         counter += 1;
     }
     (quote! {
-        fn #var(opcode: &str) -> (u32, u8, u8, OpArgMode, OpArgMode, InstMode) {
+        fn #var(opcode: &str) -> (u32, u8, u8, OpArgMask, OpArgMask, InstMode) {
             match opcode {
                 #(#quotes),*,
                 code => panic!("invalid opcode {}", code),

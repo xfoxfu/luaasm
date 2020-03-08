@@ -2,7 +2,7 @@
 
 use super::ParseResult;
 use super::{reference, Ref};
-use crate::lua::{InstMode, Lua52, OpArgMode, Target};
+use crate::lua::{InstMode, Lua52, LuaTarget, OpArgMask};
 use nom::character::complete::*;
 use nom::combinator::*;
 use nom::sequence::*;
@@ -42,7 +42,7 @@ impl Into<u32> for Instruction {
             offset_c = 0
         } else if self.opcode.as_str() != "LOADK" {
             match opmode_b {
-                OpArgMode::OpArgK | OpArgMode::OpArgR => {
+                OpArgMask::OpArgK | OpArgMask::OpArgR => {
                     offset_b = if let Some(Ref::Const(_)) = opb.as_ref() {
                         0x100
                     } else {
@@ -52,7 +52,7 @@ impl Into<u32> for Instruction {
                 _ => offset_b = 0,
             }
             match opmode_c {
-                OpArgMode::OpArgK | OpArgMode::OpArgR => {
+                OpArgMask::OpArgK | OpArgMask::OpArgR => {
                     offset_c = if let Some(Ref::Const(_)) = opc.as_ref() {
                         0x100
                     } else {
